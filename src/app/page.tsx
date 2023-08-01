@@ -29,7 +29,7 @@ export default async function Home() {
 
   //const numbers = [1, 2, 3, 4, 5];
   const listItems = data.map((character : any) =>
-    <span>&nbsp;{character.name}</span>
+    <span key={character.id}>&nbsp;{character.name}</span>
   );
 
   return (
