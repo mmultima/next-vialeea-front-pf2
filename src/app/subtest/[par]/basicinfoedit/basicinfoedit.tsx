@@ -1,5 +1,10 @@
+import { get } from 'http';
 import Image from 'next/image';
-import { Key, useEffect, useRef, useState } from 'react';
+import { Key, MouseEvent, useEffect, useRef, useState } from 'react';
+
+
+//import DialogTitle from '@mui/material/DialogTitle';
+//import Dialog from '@mui/material/Dialog';
 
 interface Props {
   name: string;
@@ -9,6 +14,30 @@ interface Props {
   handleChangeInfo: Function;
 }
 
+/*
+export interface SimpleDialogProps {
+  open: boolean;
+  selectedValue: string;
+  onClose: (value: string) => void;
+}
+
+
+function SimpleDialog(props: SimpleDialogProps) {
+  const { onClose, selectedValue, open } = props;
+
+  const handleClose = () => {
+    onClose(selectedValue);
+  };
+
+  const handleListItemClick = (value: string) => {
+    onClose(value);
+  };
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>Set backup account</DialogTitle>
+}
+      */
 
 async function  putData(id: string, data: string) {
   const res = await fetch('/api/basicinfo/' + id, { 
@@ -47,6 +76,11 @@ async function loadSpell(id: string) {
   return res;
 }
 
+async function loadFeatList(trait: string) {
+  const res = await fetch('/api/nethys/featlist/' + trait, { cache: 'no-store' })
+  return res;
+}
+
 export default function BasicInfoEdit({ name, image, colour, basicInfo, handleChangeInfo } : Props) {
     console.log("Class: ", basicInfo.charClass);
 
@@ -72,6 +106,10 @@ export default function BasicInfoEdit({ name, image, colour, basicInfo, handleCh
     const [charisma, setCharisma] = useState(basicInfo.charisma);
 
     const [feats, setFeats] = useState(emptyArray);
+
+    const [open, setOpen] = useState(emptyArray);
+
+    const [featList, setFeatList] = useState(emptyArray);
 
     if (!colour) {
       colour = "";
@@ -567,6 +605,41 @@ const handleAttributeChange = (attribute: number) => (event: React.ChangeEvent<H
   handleChangeInfo(changedInfo);
 };
 */
+const handleClose = (event: MouseEvent, index: number) => {
+  event.preventDefault();
+  const newOpen: string[] = new Array(feats.length).fill(null);
+  console.log("Close: ", index);
+  setOpen(newOpen);
+  //console.log("Close: ", index);  
+}
+
+const handleOpen = (event: MouseEvent, index: number) => {
+  /*
+  loadFeatList(feats[index].trait).then((res) => {
+    res.json().then((data) => { 
+      console.log("Feats for trait " + feats[index].trait +  ": ", data);
+      setFeatList(data);
+    })
+  });
+  */
+
+  const newOpen: string[] = new Array(feats.length).fill(null);
+  newOpen[index] = "open";
+  //newOpen[index] = "open";
+  event.preventDefault();
+  console.log("Open: ", index);
+  setOpen(newOpen);
+
+  //basicInfo.feats[index].trait
+  const trait = "Bard";
+  loadFeatList(trait).then((res) => {
+    res.json().then((data) => { 
+      console.log("Feats for trait " + trait +  ": ", data);
+      setFeatList(data);
+    })
+  });
+}
+
 
     return (
         <div>
@@ -741,6 +814,23 @@ const handleAttributeChange = (attribute: number) => (event: React.ChangeEvent<H
                             onChange={(event) => handleFeatChange(index, event)}
                           />
                           {feats[feat]?.name}
+                          <button onClick={(event) => handleOpen(event, index)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                            Edit
+                          </button>
+{/*                          <SimpleDialog
+        selectedValue={1}
+        open={open}
+        onClose={}
+     /> */}
+     <dialog open={open[index]}>
+  <p>Greetings, one and all!</p>
+  {featList?.map((feat: any, index: number) => (
+    <p key={feat.id}>{feat.name}</p>
+  ))}
+  <form method="dialog">
+    <button onClick={(event) => handleClose(event, index)}>OK</button>
+  </form>
+</dialog>
                         </div>
                       ))}
                     <button type="button" onClick={addNewFeat} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
