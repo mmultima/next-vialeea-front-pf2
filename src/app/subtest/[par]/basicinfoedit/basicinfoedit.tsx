@@ -640,6 +640,30 @@ const handleOpen = (event: MouseEvent, index: number) => {
   });
 }
 
+const handleChooseFeat = (event: MouseEvent, index: number, feat: any) => {
+  event.preventDefault();
+  console.log("Choose: ", index);
+  console.log("Feat: ", feat);
+  const newFeats = [...basicInfo.feats];
+  newFeats[index] = feat.id;
+  handleChangeInfo({ 
+    ...basicInfo,
+    feats: newFeats
+  });
+
+  //Copied from handleFeatChange
+  const newFeats2 = [...feats];
+  loadFeat(feat.id).then((res) => {  
+    res.json().then
+    ((data) => {
+      //parseInt(event.target.value)  
+      newFeats2[data.id] = data;
+      console.log("DATA: ", data);
+      setFeats(newFeats2);
+    });
+  });
+}
+
 
     return (
         <div>
@@ -823,9 +847,9 @@ const handleOpen = (event: MouseEvent, index: number) => {
         onClose={}
      /> */}
      <dialog open={open[index]}>
-  <p>Greetings, one and all!</p>
-  {featList?.map((feat: any, index: number) => (
-    <p key={feat.id}>{feat.name}</p>
+  
+  {featList?.map((feat: any, index2: number) => (
+    <button onClick={(event) => handleChooseFeat(event, index, feat)} key={index2}>{feat.name}</button>
   ))}
   <form method="dialog">
     <button onClick={(event) => handleClose(event, index)}>OK</button>
