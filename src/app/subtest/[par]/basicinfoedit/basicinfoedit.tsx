@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { Key, useEffect, useRef, useState } from 'react';
 
 interface Props {
   name: string;
@@ -11,7 +11,7 @@ interface Props {
 
 
 async function  putData(id: string, data: string) {
-  const res = await fetch('/api/character/basicinfo/' + id, { 
+  const res = await fetch('/api/basicinfo/' + id, { 
     cache: 'no-store',
     method: 'PUT',
     body: JSON.stringify(data)
@@ -22,10 +22,35 @@ async function  putData(id: string, data: string) {
   console.log("P Response: ", resdata);
 }
 
+async function loadFeat(id: string) {
+  const res = await fetch('/api/nethys/feats/' + id, { cache: 'no-store' })
+  return res;
+}
+
+async function loadWeapon(id: string) {
+  const res = await fetch('/api/nethys/equipment/weapons/' + id, { cache: 'no-store' })
+  return res;
+}
+
+async function loadArmor(id: string) {
+  const res = await fetch('/api/nethys/equipment/armor/' + id, { cache: 'no-store' })
+  return res;
+}
+
+async function loadGear(id: string) {
+  const res = await fetch('/api/nethys/equipment/gear/' + id, { cache: 'no-store' })
+  return res;
+}
+
+async function loadSpell(id: string) {
+  const res = await fetch('/api/nethys/spells/' + id, { cache: 'no-store' })
+  return res;
+}
+
 export default function BasicInfoEdit({ name, image, colour, basicInfo, handleChangeInfo } : Props) {
     console.log("Class: ", basicInfo.charClass);
 
-
+    const emptyArray: any[]  = [];
     //console.log("Name: " + name);
     // React / Next doesn't like 'null' as data, but "" gives an empty element.
     const [charClass, setCharClass] = useState(basicInfo.charClass);
@@ -37,7 +62,16 @@ export default function BasicInfoEdit({ name, image, colour, basicInfo, handleCh
     const [HP, setHp] = useState(basicInfo.HP);
     const [race, setRace] = useState(basicInfo.race);
     const [gender, setGender] = useState(basicInfo.gender);
+    
+    const [strength, setStrength] = useState(basicInfo.strength);
+    
+    const [dexterity, setDexterity] = useState(basicInfo.dexterity);
+    const [constitution, setConstitution] = useState(basicInfo.constitution);
+    const [intelligence, setIntelligence] = useState(basicInfo.intelligence);
+    const [wisdom, setWisdom] = useState(basicInfo.wisdom);
+    const [charisma, setCharisma] = useState(basicInfo.charisma);
 
+    const [feats, setFeats] = useState(emptyArray);
 
     if (!colour) {
       colour = "";
@@ -60,6 +94,65 @@ export default function BasicInfoEdit({ name, image, colour, basicInfo, handleCh
     const gender = "Female";
 */
 
+    const handleStrengthChange = (event: any) => {
+      setStrength(event.target.value);
+      const changedInfo = {
+        ...basicInfo,
+        strength: event.target.value
+      };
+
+      handleChangeInfo(changedInfo);
+    }
+
+    const handleDexterityChange = (event: any) => {
+      setDexterity(event.target.value);
+      const changedInfo = {
+        ...basicInfo,
+        dexterity: event.target.value
+      };
+
+      handleChangeInfo(changedInfo);
+    }
+
+    const handleConstitutionChange = (event: any) => {
+      setConstitution(event.target.value);
+      const changedInfo = {
+        ...basicInfo,
+        constitution: event.target.value
+      };
+
+      handleChangeInfo(changedInfo);
+    }
+
+    const handleIntelligenceChange = (event: any) => {
+      setIntelligence(event.target.value);
+      const changedInfo = {
+        ...basicInfo,
+        intelligence: event.target.value
+      };
+
+      handleChangeInfo(changedInfo);
+    }
+
+    const handleWisdomChange = (event: any) => {
+      setWisdom(event.target.value);
+      const changedInfo = {
+        ...basicInfo,
+        wisdom: event.target.value
+      };
+
+      handleChangeInfo(changedInfo);
+    }
+
+    const handleCharismaChange = (event: any) => {
+      setCharisma(event.target.value);
+      const changedInfo = {
+        ...basicInfo,
+        charisma: event.target.value
+      };
+
+      handleChangeInfo(changedInfo);
+    }
 
     const handleCharClassChange = (event: any) => {
         setCharClass(event.target.value);
@@ -108,11 +201,15 @@ export default function BasicInfoEdit({ name, image, colour, basicInfo, handleCh
 
         handleChangeInfo(changedInfo);
     }
+
+
+    //TODO: Fix AC and HP
+
     const handleAcChange = (event: any) => {
         setAc(event.target.value);
         const changedInfo = {
           ...basicInfo,
-          AC: event.target.value
+          ac: event.target.value
         };
 
         handleChangeInfo(changedInfo);
@@ -121,7 +218,7 @@ export default function BasicInfoEdit({ name, image, colour, basicInfo, handleCh
         setHp(event.target.value);
         const changedInfo = {
           ...basicInfo,
-          HP: event.target.value
+          hp: event.target.value
         };
 
         handleChangeInfo(changedInfo);
@@ -152,6 +249,9 @@ export default function BasicInfoEdit({ name, image, colour, basicInfo, handleCh
       event.preventDefault();
       console.log("BasicInfo: ", basicInfo);
 
+      //basicInfo.id = "1";
+
+      putData(basicInfo.id, JSON.stringify(basicInfo));
       //putData(newCharacter.id, JSON.stringify(newCharacter));
     };
     
@@ -160,6 +260,313 @@ export default function BasicInfoEdit({ name, image, colour, basicInfo, handleCh
 
     /*<div className="border-solid border-4 border-indigo-600 hover:border-red-600 rounded-lg flex items-center">*/ 
 /*   <div className="m-3 bg-white hover:bg-sky-100 rounded-lg shadow-lg flex items-center">*/
+
+//const [feats, setFeats] = useState<string[]>(['']);
+
+
+//TODO: How to load feats from the server? How to wait for basicInfo to be loaded?
+/*
+useEffect(() => {
+  console.log("BasicInfo before: ", basicInfo);
+  const newFeats = basicInfo.feats;
+  const newFeats2 = [...feats];
+  newFeats.forEach((feat: number) => {
+    loadFeat("" + feat).then((res) => {  
+      res.json().then
+      ((data) => {
+        //parseInt(event.target.value)  
+        newFeats2[data.id] = data;
+        console.log("DATA: ", data);
+        setFeats(newFeats2);
+      });
+    });
+  });
+  console.log("BasicInfo after: ", basicInfo);
+}, []);
+*/
+
+const initialLoad = useRef(true);
+
+useEffect(() => {
+  if (initialLoad.current && basicInfo.feats && basicInfo.feats.length > 0) {
+    initialLoad.current = false;
+    console.log("BasicInfo before: ", basicInfo);
+    const newFeats = basicInfo.feats;
+    const newFeats2 = [...feats];
+    /*
+    newFeats.forEach((feat: number) => {
+      loadFeat("" + feat).then((res) => {  
+        res.json().then((data) => {
+          newFeats2[data.id] = data;
+          console.log("DATA: ", data);
+          setFeats(newFeats2);
+        });
+      });
+    });
+*/
+    const newWeapons = basicInfo.weapons;
+    const newWeapons2 = [...weapons]; 
+
+    const newArmor = basicInfo.armor;
+    const newArmor2 = [...armor];
+
+
+    Promise.all(newFeats.map((feat: number) => 
+      loadFeat("" + feat).then(res => res.json())
+    )).then(dataArray => {
+      dataArray.forEach(data => {
+        newFeats2[data.id] = data;
+      });
+      console.log("DATA: ", dataArray);
+      setFeats(() => newFeats2);
+    });
+
+    if (newWeapons) {
+    Promise.all(newWeapons.map((weapon: number) =>
+      loadWeapon("" + weapon).then(res => res.json())
+    )).then(dataArray => {
+      dataArray.forEach(data => {
+        newWeapons2[data.id] = data;
+      });
+      console.log("DATA: ", dataArray);
+      setWeapons(() => newWeapons2);
+    });
+  }
+
+  if (newArmor) {
+    Promise.all(newArmor.map((armorItem: number) =>
+      loadArmor("" + armorItem).then(res => res.json())
+    )).then(dataArray => {
+      dataArray.forEach(data => {
+        newArmor2[data.id] = data;
+      });
+      console.log("DATA: ", dataArray);
+      setArmor(() => newArmor2);
+    });
+  }
+
+    const newGear = basicInfo.gear;
+    const newGear2 = [...gear];
+
+    if (newGear) {
+    Promise.all(newGear.map((gearItem: number) =>
+      loadGear("" + gearItem).then(res => res.json())
+    )).then(dataArray => {
+      dataArray.forEach(data => {
+        newGear2[data.id] = data;
+      });
+      console.log("DATA: ", dataArray);
+      setGear(() => newGear2);
+    });
+  }
+
+    const newSpells = basicInfo.spells;
+    const newSpells2 = [...spells];
+
+    if (newSpells) {
+    Promise.all(newSpells.map((spell: number) =>
+      loadSpell("" + spell).then(res => res.json())
+    )).then(dataArray => {
+      dataArray.forEach(data => {
+        newSpells2[data.id] = data;
+      });
+      console.log("DATA: ", dataArray);
+      setSpells(() => newSpells2);
+    });
+  }
+
+    console.log("BasicInfo after: ", basicInfo);
+  }
+}, [basicInfo]);
+
+const handleFeatChange = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+  console.log("BasicInfo before: ", basicInfo);
+  const newFeats = [...basicInfo.feats];
+  newFeats[index] = event.target.value;
+  const newFeats2 = [...feats];
+  //newFeats2[index] = "";
+  //newFeats2[]
+  //setFeats(newFeats2);
+  //setFeats(newFeats)
+
+  loadFeat(event.target.value).then((res) => {  
+    res.json().then
+    ((data) => {
+      //parseInt(event.target.value)  
+      newFeats2[data.id] = data;
+      console.log("DATA: ", data);
+      setFeats(newFeats2);
+    });
+  });
+
+  const changedInfo = {
+    ...basicInfo,
+    feats: newFeats
+  };
+  handleChangeInfo(changedInfo);
+  console.log("BasicInfo after: ", basicInfo);
+
+};
+
+const addNewFeat = () => {
+  console.log("BasicInfo: ", basicInfo);
+  //setFeats([...feats, '']);
+  const changedInfo = {
+    ...basicInfo,
+    feats: [...basicInfo.feats, '']
+  };
+  handleChangeInfo(changedInfo);
+  console.log("BasicInfo after: ", basicInfo);
+};
+
+//const [weapons, setWeapons] = useState<string[]>(['']);
+const [weapons, setWeapons] = useState(emptyArray);
+
+//emptyArray
+const handleWeaponChange = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+  const newWeapons = [...basicInfo.weapons];
+  newWeapons[index] = event.target.value;
+  const newWeapons2 = [...weapons];
+  //setWeapons(newWeapons);
+
+  loadWeapon(event.target.value).then((res) => {  
+    res.json().then
+    ((data) => {
+      //parseInt(event.target.value)  
+      newWeapons2[data.id] = data;
+      console.log("DATA: ", data);
+      setWeapons(newWeapons2);
+    });
+  });
+
+  const changedInfo = {
+    ...basicInfo,
+    weapons: newWeapons
+  };
+  handleChangeInfo(changedInfo);
+};
+
+const addNewWeapon = () => {
+  const changedInfo = {
+    ...basicInfo,
+    weapons: basicInfo.weapons ? [...basicInfo.weapons, ''] : ['']
+  };
+  handleChangeInfo(changedInfo);
+};
+
+const [armor, setArmor] = useState(emptyArray);
+
+const handleArmorChange = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+  const newArmor = [...basicInfo.armor];
+  newArmor[index] = event.target.value;
+  const newArmor2 = [...armor];
+
+  loadArmor(event.target.value).then((res) => {  
+    res.json().then
+    ((data) => {
+      newArmor2[data.id] = data;
+      console.log("DATA: ", data);
+      setArmor(newArmor2);
+    });
+  });
+
+  const changedInfo = {
+    ...basicInfo,
+    armor: newArmor
+  };
+  handleChangeInfo(changedInfo);
+};
+
+const addNewArmor = () => {
+  const changedInfo = {
+    ...basicInfo,
+    armor: basicInfo.armor ? [...basicInfo.armor, ''] : ['']
+  };
+  handleChangeInfo(changedInfo);
+};
+
+const [spells, setSpells] = useState(emptyArray);
+
+const handleSpellChange = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+  const newSpells = [...basicInfo.spells];
+  newSpells[index] = event.target.value;
+  const newSpells2 = [...spells];
+
+  loadSpell(event.target.value).then((res) => {  
+    res.json().then
+    ((data) => {
+      newSpells2[data.id] = data;
+      console.log("DATA: ", data);
+      setSpells(newSpells2);
+    });
+  });
+
+  const changedInfo = {
+    ...basicInfo,
+    spells: newSpells
+  };
+  handleChangeInfo(changedInfo);
+};
+
+const addNewSpell = () => {
+  const changedInfo = {
+    ...basicInfo,
+    spells: basicInfo.spells ? [...basicInfo.spells, ''] : ['']
+  };
+  handleChangeInfo(changedInfo);
+};
+
+const [gear, setGear] = useState(emptyArray);
+
+const handleGearChange = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+  const newGear = [...basicInfo.gear];
+  newGear[index] = event.target.value;
+  const newGear2 = [...gear];
+
+  loadGear(event.target.value).then((res) => {  
+    res.json().then
+    ((data) => {
+      newGear2[data.id] = data;
+      console.log("DATA: ", data);
+      setGear(newGear2);
+    });
+  });
+
+  const changedInfo = {
+    ...basicInfo,
+    gear: newGear
+  };
+  handleChangeInfo(changedInfo);
+};
+
+const addNewGear = () => {
+  const changedInfo = {
+    ...basicInfo,
+    gear: basicInfo.gear ? [...basicInfo.gear, ''] : ['']
+  };
+  handleChangeInfo(changedInfo);
+};
+
+const handleSkillChange = (skill: string, event: React.ChangeEvent<HTMLInputElement>) => {
+  const changedInfo = {
+    ...basicInfo,
+    skills: {
+      ...basicInfo.skills,
+      [skill]: parseInt(event.target.value)
+    }
+  };
+  handleChangeInfo(changedInfo);
+}
+
+/*
+const handleAttributeChange = (attribute: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
+  const changedInfo = {
+    ...basicInfo,
+    [attribute]: event.target.value
+  };
+  handleChangeInfo(changedInfo);
+};
+*/
 
     return (
         <div>
@@ -180,56 +587,240 @@ export default function BasicInfoEdit({ name, image, colour, basicInfo, handleCh
             <strong>{ name }</strong>
           </div>
           <div>
-            {gender} {race} {charClass} {level}
+            {basicInfo.gender} {basicInfo.race} {basicInfo.charClass} {basicInfo.level}
           </div>
           <div>
-            <strong>HP</strong> {HP} 
-            <strong> AC</strong> {AC} 
-            <strong> Fort</strong> +{fort} 
-            <strong> Ref</strong> +{ref} 
-            <strong> Will</strong> +{will} 
+            <strong>HP</strong> {basicInfo.hp} 
+            <strong> AC</strong> {basicInfo.ac} 
+            <strong> Fort</strong> +{basicInfo.fort} 
+            <strong> Ref</strong> +{basicInfo.ref} 
+            <strong> Will</strong> +{basicInfo.will} 
           </div>
         </div>
       </div>
                   <form>
                   <div className="p-3">
                     Class
-                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={charClass} onChange={ handleCharClassChange }></input>
+                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.charClass} onChange={ handleCharClassChange }></input>
                   </div>
                   <div className="p-3">
                     Level
-                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={level} onChange={ handleLevelChange }></input>
+                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.level} onChange={ handleLevelChange }></input>
                   </div>
                   <div className="p-3">
                     Fort
-                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={fort} onChange={ handleFortChange }></input>
+                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.fort} onChange={ handleFortChange }></input>
                   </div>
                   <div className="p-3">
                     Will
-                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={will} onChange={ handleWillChange }></input>
+                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.will} onChange={ handleWillChange }></input>
                   </div>
                   <div className="p-3">
                     Ref
-                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={ref} onChange={ handleRefChange }></input>
+                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.ref} onChange={ handleRefChange }></input>
                   </div>
                   <div className="p-3">
                     AC
-                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={AC} onChange={ handleAcChange }></input>
+                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.ac} onChange={ handleAcChange }></input>
                   </div>
                   <div className="p-3">
                     HP
-                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={HP} onChange={ handleHpChange }></input>
+                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.hp} onChange={ handleHpChange }></input>
                   </div>
                   <div className="p-3">
                     Race
-                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={race} onChange={ handleRaceChange }></input>
+                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.race} onChange={ handleRaceChange }></input>
                   </div>
                   <div className="p-3">
                     Gender
-                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={gender} onChange={ handleGenderChange }></input>
+                    <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.gender} onChange={ handleGenderChange }></input>
                   </div>
+                  <div className="p-3">
+          Strength
+          <input type="number" className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.strength} onChange={handleStrengthChange}></input>
+        </div>
+        
+        <div className="p-3">
+          Dexterity
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.dexterity} onChange={handleDexterityChange }></input>
+        </div>
+        <div className="p-3">
+          Constitution
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.constitution} onChange={handleConstitutionChange}></input>
+        </div>
+        <div className="p-3">
+          Intelligence
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.intelligence} onChange={handleIntelligenceChange}></input>
+        </div>
+        <div className="p-3">
+          Wisdom
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.wisdom} onChange={handleWisdomChange}></input>
+        </div>
+        <div className="p-3">
+          Charisma
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.charisma} onChange={handleCharismaChange}></input>
+        </div>                    
+        <div className="p-3">
+          Acrobatics
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.acrobatics} onChange={(event) => handleSkillChange('acrobatics', event)}></input>
+        </div>
+        <div className="p-3">
+          Arcana
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.arcana} onChange={(event) => handleSkillChange('arcana', event)}></input>
+        </div>
+        <div className="p-3">
+          Athletics
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.athletics} onChange={(event) => handleSkillChange('athletics', event)}></input>
+        </div>
+        <div className="p-3">
+          Crafting
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.crafting} onChange={(event) => handleSkillChange('crafting', event)}></input>
+        </div>
+        <div className="p-3">
+          Deception
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.deception} onChange={(event) => handleSkillChange('deception', event)}></input>
+        </div>
+        <div className="p-3">
+          Diplomacy
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.diplomacy} onChange={(event) => handleSkillChange('diplomacy', event)}></input>
+        </div>
+        <div className="p-3">
+          Intimidation
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.intimidation} onChange={(event) => handleSkillChange('intimidation', event)}></input>
+        </div>
+        <div className="p-3">
+          Lore
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.lore} onChange={(event) => handleSkillChange('lore', event)}></input>
+        </div>
+        <div className="p-3">
+          Medicine
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.medicine} onChange={(event) => handleSkillChange('medicine', event)}></input>
+        </div>
+        <div className="p-3">
+          Nature
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.nature} onChange={(event) => handleSkillChange('nature', event)}></input>
+        </div>
+        <div className="p-3">
+          Occultism
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.occultism} onChange={(event) => handleSkillChange('occultism', event)}></input>
+        </div>
+        <div className="p-3">
+          Performance
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.performance} onChange={(event) => handleSkillChange('performance', event)}></input>
+        </div>
+        <div className="p-3">
+          Religion
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.religion} onChange={(event) => handleSkillChange('religion', event)}></input>
+        </div>
+        <div className="p-3">
+          Society
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.society} onChange={(event) => handleSkillChange('society', event)}></input>
+        </div>
+        <div className="p-3">
+          Stealth
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.stealth} onChange={(event) => handleSkillChange('stealth', event)}></input>
+        </div>
+        <div className="p-3">
+          Survival
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.survival} onChange={(event) => handleSkillChange('survival', event)}></input>
+        </div>
+        <div className="p-3">
+          Thievery
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.thievery} onChange={(event) => handleSkillChange('thievery', event)}></input>
+        </div>
 
                   <div className="p-3 flex justify-end">
+
+                  <div className="p-3">
+                      <strong>Feats</strong>
+                      {basicInfo.feats?.map((feat: number, index: number) => (
+                        <div key={index} className="p-1">
+                          <input
+                            className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300"
+                            value={feat}
+                            onChange={(event) => handleFeatChange(index, event)}
+                          />
+                          {feats[feat]?.name}
+                        </div>
+                      ))}
+                    <button type="button" onClick={addNewFeat} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                      Add Feat
+                    </button>
+                  </div>                      
+
+      {/* Weapons inputs */}
+      <div className="p-3">
+        <strong>Weapons</strong>
+        {basicInfo.weapons?.map((weapon : number, index : number) => (
+          <div key={index} className="p-1">
+            <input
+              className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300"
+              value={weapon}
+              onChange={(event) => handleWeaponChange(index, event)}
+            />
+            {weapons[weapon]?.name}
+          </div>
+        ))}
+        <button type="button" onClick={addNewWeapon} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+          Add Weapon
+        </button>
+      </div>
+
+      <div className="p-3">
+            <strong>Armor</strong>
+            {basicInfo.armor?.map((armorItem: number, index:number) => (
+              <div key={index} className="p-1">
+                <input
+                  className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300"
+                  value={armorItem}
+                  onChange={(event) => handleArmorChange(index, event)}
+                />
+                {armor[armorItem]?.name}
+              </div>
+            ))}
+            <button type="button" onClick={addNewArmor} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+              Add Armor
+            </button>
+          </div>
+
+
+      {/* Gear inputs */}
+      <div className="p-3">
+        <strong>Gear</strong>
+        {basicInfo.gear?.map((gearItem: number, index: number) => (
+          <div key={index} className="p-1">
+            <input
+              className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300"
+              value={gearItem}
+              onChange={(event) => handleGearChange(index, event)}
+            />
+            {gear[gearItem]?.name}
+          </div>
+        ))}
+        <button type="button" onClick={addNewGear} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+          Add Gear
+        </button>
+      </div>
+
+      {/* Spells inputs */}
+      <div className="p-3">
+        <strong>Spells</strong>
+        {basicInfo.spells?.map((spell: number, index: number) => (
+          <div key={index} className="p-1">
+            <input
+              className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300"
+              value={spell}
+              onChange={(event) => handleSpellChange(index, event)}
+            />
+            {spells[spell]?.name}
+          </div>
+        ))}
+        <button type="button" onClick={addNewSpell} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+          Add Spell
+        </button>
+      </div>
+
+
                 <button onClick={buttonClick} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                   Button
                 </button>

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 //'use client';
 
 import Image from 'next/image'
+import { get } from 'http';
 
 async function getData( id: string ) {
   //const res = await fetch('https://vialeea-test.azurewebsites.net/api/char/load', { cache: 'no-store' })
@@ -33,15 +34,16 @@ async function getData( id: string ) {
 }
 
 async function postData(id: string, data: string) {
-  const res = await fetch('/api/character/' + id, { 
+  const res = await fetch('/api/character', { 
     cache: 'no-store',
     method: 'POST',
-    body: JSON.stringify({mydata : data})
+    body: JSON.stringify(data)
   });
 
   const resdata = await  res.json();
 
   console.log("Response: ", resdata);
+  return resdata;
 }
 
 
@@ -63,6 +65,32 @@ function handleChange(event: Event) {
   console.log("Change: ", event);
 }
 */
+async function getBasicInfo( id: string ) {
+  const res = await fetch('/api/basicinfo/' + id, { cache: 'no-store' })
+  console.log("Hello!");
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch basicinfo data')
+  }
+
+  const data = res.json();
+  return data;
+}
+
+//TODO: This is duplicated in basicinfoedit.tsx
+async function  putBasicInfo(id: string | null, data: string) {
+  const res = await fetch('/api/basicinfo/' + id, { 
+    cache: 'no-store',
+    method: 'PUT',
+    body: JSON.stringify(data)
+  });
+
+  const resdata = await  res.json()
+
+  console.log("BasicInfo default page put Response: ", resdata);
+  return resdata;
+}
+
 
 export default function Page({ params }: { params: { par: string } }) {
     //TODO: Error handling on missing data completely broken.
@@ -102,10 +130,15 @@ export default function Page({ params }: { params: { par: string } }) {
         fort : 5,
         will : 4,
         ref : 6,
-        AC : 17,
-        HP : 14,
+        ac : 17,
+        hp : 14,
         race : "elf",
-        gender : "Female"
+        strength: 0,
+        dexterity: 0,
+        constitution: 0,
+        intelligence: 0,
+        wisdom: 0,
+        charisma: 0
       }
     );
 
@@ -114,6 +147,11 @@ export default function Page({ params }: { params: { par: string } }) {
     };
 
     useEffect(() => {
+      if (params.par == "0") {
+        console.log('No params');
+        return;
+      }
+
       console.log('effect');
       getData(params.par)
       .then(character => {
@@ -124,8 +162,40 @@ export default function Page({ params }: { params: { par: string } }) {
           setColourInput(character.colour);
           setCharacter(character);
           console.log('All data should be set?');
+          if (character.basicInfoId) {
+              getBasicInfo(character.basicInfoId).then(basicInfo => {
+                  console.log('promise fulfilled ', basicInfo);
+                  setBasicInfo(basicInfo);
+              });
+          }
+          else {
+              newBasicInfo(character);
+          }
+
+
+
         });
     }, []);
+
+
+    const newBasicInfo = (character: any) => {
+      putBasicInfo(null, JSON.stringify(basicInfo)).then(basicInfo => {
+        console.log('promise fulfilled ', basicInfo);
+        //setBasicInfo(basicInfo);
+        const newCharacter = { 
+          ...character, 
+          basicInfoId: basicInfo.id
+        };
+        setCharacter(newCharacter);
+
+        console.log("FAIL here? New character: ", newCharacter);
+
+        putData(newCharacter.id, JSON.stringify(newCharacter));
+
+        handleChangeInfo(basicInfo);
+        //setCharacterBasicInfo
+      });
+    }
 
     //const character = await getData(params.par);
 
@@ -169,8 +239,22 @@ export default function Page({ params }: { params: { par: string } }) {
 
       event.preventDefault();
       console.log("Button clicked", event);
-      postData("myid", "mydata");
-      putData(newCharacter.id, JSON.stringify(newCharacter));
+      //postData("myid", "mydata");
+
+      //console.log("New character: ", newCharacter);
+
+      if (newCharacter.id != '') {
+
+        putData(newCharacter.id, JSON.stringify(newCharacter));
+      }
+      else {
+        console.log("New character: ");
+        postData(newCharacter.id, JSON.stringify(newCharacter)).then( (data) => {
+          setCharacter(data);
+          newBasicInfo(newCharacter);
+        } 
+        )
+      }
     };
     
 /*

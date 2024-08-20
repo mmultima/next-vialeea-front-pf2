@@ -20,12 +20,12 @@ export default async function Page() {
         colour: "border-gray-950"
       }];
 
-    const basicinfo = {
+    const basicInfo = {
       charClass: 'sorcerer'
     }
 
     const listItems = data.map((character : any) =>
-      <Item name={character.name} image={character.image} colour={character.colour} basicinfo={basicinfo}/>
+      <Item name={character.name} image={character.image} colour={character.colour} basicInfo={basicInfo}/>
     );
 
 

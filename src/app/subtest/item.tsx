@@ -25,11 +25,13 @@ export default function Item({ name, image, colour, basicInfo } : Props) {
     const level = basicInfo.level;
     const fort = basicInfo.fort;
     const will = basicInfo.will;
-    const ref = basicInfo.ref;
-    const AC = basicInfo.AC;
-    const HP = basicInfo.HP;
+    const ref = basicInfo.ref; 
+    const AC = basicInfo.ac; //OK it loses capitalization somewhere
+    const HP = basicInfo.hp;
     const race = basicInfo.race;
     const gender = basicInfo.gender;
+
+    console.log(basicInfo);
 
     /*
     const charClass = "sorcerer";
