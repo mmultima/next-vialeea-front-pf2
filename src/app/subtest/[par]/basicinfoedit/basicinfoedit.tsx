@@ -664,6 +664,50 @@ const handleChooseFeat = (event: MouseEvent, index: number, feat: any) => {
   });
 }
 
+const switchFeatListType = (event: MouseEvent, trait: string) => {
+  event.preventDefault();
+  console.log("Trait: ", trait);
+  loadFeatList(trait).then((res) => {
+    res.json().then((data) => { 
+      console.log("Feats for trait " + trait +  ": ", data);
+      setFeatList(data);
+    })
+  });
+}
+
+//Lots of ancestries missing
+const traitList = [
+//  "Ancestry",
+  "Dwarf",
+  "Elf",
+  "Gnome",
+  "Goblin",
+  "Halfling",
+  "Human",
+  "Half-Elf",
+  "Half-Orc", 
+  "Archetype",
+  //"Class",
+  "Alchemist",
+  "Bard",
+  "Barbarian",
+  "Champion",
+  "Cleric",
+  "Druid",
+  "Fighter",
+  "Investigator",
+  "Monk",
+  "Oracle",
+  "Ranger",
+  "Rogue",
+  "Sorcerer",
+  "Summoner",
+  "Swashbuckler",
+  "Witch",
+  "Wizard",
+  "General",
+  "Skill"
+];
 
     return (
         <div>
@@ -847,7 +891,11 @@ const handleChooseFeat = (event: MouseEvent, index: number, feat: any) => {
         onClose={}
      /> */}
      <dialog open={open[index]}>
-  
+  {traitList.map((trait: string, index2: number) => (
+    <button onClick={(event) => switchFeatListType(event, trait)} key={index2}>{trait}</button>
+  ))
+  }
+  <br></br>
   {featList?.map((feat: any, index2: number) => (
     <button onClick={(event) => handleChooseFeat(event, index, feat)} key={index2}>{feat.name}</button>
   ))}
