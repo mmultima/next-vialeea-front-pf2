@@ -81,6 +81,16 @@ async function loadFeatList(trait: string) {
   return res;
 }
 
+async function loadWeaponList(par: string) {
+  const res = await fetch('/api/nethys/weaponlist/' + par, { cache: 'no-store' })
+  return res;
+}
+
+async function loadArmorList(par: string) {
+  const res = await fetch('/api/nethys/armorlist/' + par, { cache: 'no-store' })
+  return res;
+}
+
 export default function BasicInfoEdit({ name, image, colour, basicInfo, handleChangeInfo } : Props) {
     console.log("Class: ", basicInfo.charClass);
 
@@ -108,8 +118,12 @@ export default function BasicInfoEdit({ name, image, colour, basicInfo, handleCh
     const [feats, setFeats] = useState(emptyArray);
 
     const [open, setOpen] = useState(emptyArray);
+    const [openWeapon, setOpenWeapon] = useState(emptyArray);
+    const [openArmor, setOpenArmor] = useState(emptyArray);
 
     const [featList, setFeatList] = useState(emptyArray);
+    const [weaponList, setWeaponList] = useState(emptyArray);
+    const [armorList, setArmorList] = useState(emptyArray);
 
     if (!colour) {
       colour = "";
@@ -623,6 +637,8 @@ const handleOpen = (event: MouseEvent, index: number) => {
   });
   */
 
+  //TODO: The length should be taken from basicInfo.feats?
+
   const newOpen: string[] = new Array(feats.length).fill(null);
   newOpen[index] = "open";
   //newOpen[index] = "open";
@@ -674,6 +690,145 @@ const switchFeatListType = (event: MouseEvent, trait: string) => {
     })
   });
 }
+
+const categoryList = [
+  "simple",
+  "martial",
+  "advanced",
+  "ammunition"
+];
+
+const handleOpenArmor = (event: MouseEvent, index: number) => {
+
+  const newOpen: string[] = new Array(basicInfo.equipment?.armor?.length).fill(null);
+  newOpen[index] = "open";
+  //newOpen[index] = "open";
+  event.preventDefault();
+  console.log("Open: ", index);
+  setOpenArmor(newOpen);
+
+  //basicInfo.feats[index].trait
+  const trait = "unarmored";
+  loadArmorList(trait).then((res) => {
+    res.json().then((data) => { 
+      console.log("Armor for trait " + trait +  ": ", data);
+      setArmorList(data);
+    })
+  });
+}
+
+const handleCloseArmor = (event: MouseEvent, index: number) => {
+  event.preventDefault();
+  const newOpen: string[] = new Array(basicInfo.equipment?.armor?.length).fill(null);
+  console.log("Close: ", index);
+  setOpenArmor(newOpen);
+  //console.log("Close: ", index);  
+}
+
+const handleChooseArmor = (event: MouseEvent, index: number, onearmor: any) => {
+  event.preventDefault();
+  console.log("Choose: ", index);
+  console.log("Armor: ", onearmor);
+  const newArmor = [...basicInfo.armor];
+  newArmor[index] = onearmor.id;
+  handleChangeInfo({ 
+    ...basicInfo,
+    armor: newArmor
+  });
+
+  //Copied from handleFeatChange
+  const newArmor2 = [...armor];
+  loadArmor(onearmor.id).then((res) => {  
+    res.json().then
+    ((data) => {
+      //parseInt(event.target.value)  
+      newArmor2[data.id] = data;
+      console.log("DATA: ", data);
+      setArmor(newArmor2);
+    });
+  });
+}
+
+const switchArmorListType = (event: MouseEvent, category: string) => {
+  event.preventDefault();
+  console.log("category: ", category);
+  loadArmorList(category).then((res) => {
+    res.json().then((data) => { 
+      console.log("Armor for category " + category +  ": ", data);
+      setArmorList(data);
+    })
+  });
+}
+
+const armorCategoryList = [
+  "unarmored",
+  "light",
+  "medium",
+  "heavy"
+];
+
+const handleOpenWeapon = (event: MouseEvent, index: number) => {
+
+  const newOpen: string[] = new Array(basicInfo.equipment?.weapons?.length).fill(null);
+  newOpen[index] = "open";
+  //newOpen[index] = "open";
+  event.preventDefault();
+  console.log("Open: ", index);
+  setOpenWeapon(newOpen);
+
+  //basicInfo.feats[index].trait
+  const trait = "simple";
+  loadWeaponList(trait).then((res) => {
+    res.json().then((data) => { 
+      console.log("Weapons for trait " + trait +  ": ", data);
+      setWeaponList(data);
+    })
+  });
+}
+
+const handleCloseWeapon = (event: MouseEvent, index: number) => {
+  event.preventDefault();
+  const newOpen: string[] = new Array(basicInfo.equipment?.weapons?.length).fill(null);
+  console.log("Close: ", index);
+  setOpenWeapon(newOpen);
+  //console.log("Close: ", index);  
+}
+
+const handleChooseWeapon = (event: MouseEvent, index: number, weapon: any) => {
+  event.preventDefault();
+  console.log("Choose: ", index);
+  console.log("Weapon: ", weapon);
+  const newWeapons = [...basicInfo.weapons];
+  newWeapons[index] = weapon.id;
+  handleChangeInfo({ 
+    ...basicInfo,
+    weapons: newWeapons
+  });
+
+  //Copied from handleFeatChange
+  const newWeapons2 = [...weapons];
+  loadWeapon(weapon.id).then((res) => {  
+    res.json().then
+    ((data) => {
+      //parseInt(event.target.value)  
+      newWeapons2[data.id] = data;
+      console.log("DATA: ", data);
+      setWeapons(newWeapons2);
+    });
+  });
+}
+
+const switchWeaponListType = (event: MouseEvent, category: string) => {
+  event.preventDefault();
+  console.log("category: ", category);
+  loadWeaponList(category).then((res) => {
+    res.json().then((data) => { 
+      console.log("Weapons for category " + category +  ": ", data);
+      setWeaponList(data);
+    })
+  });
+}
+
 
 //Lots of ancestries missing
 const traitList = [
@@ -921,6 +1076,25 @@ const traitList = [
               onChange={(event) => handleWeaponChange(index, event)}
             />
             {weapons[weapon]?.name}
+
+                          <button onClick={(event) => handleOpenWeapon(event, index)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                            Edit
+                          </button>
+
+                          <dialog open={openWeapon[index]}>
+  {categoryList.map((category: string, index2: number) => (
+    <button onClick={(event) => switchWeaponListType(event, category)} key={index2}>{category}</button>
+  ))
+  }
+  <br></br>
+  {weaponList?.map((weapon: any, index2: number) => (
+    <button onClick={(event) => handleChooseWeapon(event, index, weapon)} key={index2}>{weapon.name}</button>
+  ))}
+  <form method="dialog">
+    <button onClick={(event) => handleCloseWeapon(event, index)}>OK</button>
+  </form>
+</dialog>
+
           </div>
         ))}
         <button type="button" onClick={addNewWeapon} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
@@ -938,6 +1112,25 @@ const traitList = [
                   onChange={(event) => handleArmorChange(index, event)}
                 />
                 {armor[armorItem]?.name}
+
+                <button onClick={(event) => handleOpenArmor(event, index)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                  Edit
+                </button>
+
+                <dialog open={openArmor[index]}>
+  {armorCategoryList.map((category: string, index2: number) => (
+    <button onClick={(event) => switchArmorListType(event, category)} key={index2}>{category}</button>
+  ))
+  }
+  <br></br>
+  {armorList?.map((onearmor: any, index2: number) => (
+    <button onClick={(event) => handleChooseArmor(event, index, onearmor)} key={index2}>{onearmor.name}</button>
+  ))}
+  <form method="dialog">
+    <button onClick={(event) => handleCloseArmor(event, index)}>OK</button>
+  </form>
+</dialog>
+
               </div>
             ))}
             <button type="button" onClick={addNewArmor} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
