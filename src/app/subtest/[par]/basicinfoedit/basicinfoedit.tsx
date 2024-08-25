@@ -91,6 +91,11 @@ async function loadArmorList(par: string) {
   return res;
 }
 
+async function loadGearList(par: string) {
+  const res = await fetch('/api/nethys/gearlist', { cache: 'no-store' })
+  return res;
+}
+
 export default function BasicInfoEdit({ name, image, colour, basicInfo, handleChangeInfo } : Props) {
     console.log("Class: ", basicInfo.charClass);
 
@@ -120,10 +125,12 @@ export default function BasicInfoEdit({ name, image, colour, basicInfo, handleCh
     const [open, setOpen] = useState(emptyArray);
     const [openWeapon, setOpenWeapon] = useState(emptyArray);
     const [openArmor, setOpenArmor] = useState(emptyArray);
+    const [openGear, setOpenGear] = useState(emptyArray);
 
     const [featList, setFeatList] = useState(emptyArray);
     const [weaponList, setWeaponList] = useState(emptyArray);
     const [armorList, setArmorList] = useState(emptyArray);
+    const [gearList, setGearList] = useState(emptyArray);
 
     if (!colour) {
       colour = "";
@@ -397,12 +404,12 @@ useEffect(() => {
     });
   }
 
-    const newGear = basicInfo.gear;
+    const newGear = basicInfo.gearCompact;
     const newGear2 = [...gear];
 
     if (newGear) {
-    Promise.all(newGear.map((gearItem: number) =>
-      loadGear("" + gearItem).then(res => res.json())
+    Promise.all(newGear.map((gearItem: any) =>
+      loadGear("" + gearItem.id).then(res => res.json())
     )).then(dataArray => {
       dataArray.forEach(data => {
         newGear2[data.id] = data;
@@ -594,7 +601,7 @@ const handleGearChange = (index: number, event: React.ChangeEvent<HTMLInputEleme
 const addNewGear = () => {
   const changedInfo = {
     ...basicInfo,
-    gear: basicInfo.gear ? [...basicInfo.gear, ''] : ['']
+    gearCompact: basicInfo.gearCompact ? [...basicInfo.gearCompact, ''] : ['']
   };
   handleChangeInfo(changedInfo);
 };
@@ -829,6 +836,83 @@ const switchWeaponListType = (event: MouseEvent, category: string) => {
   });
 }
 
+const getGearName = (id: number, name: string, subid: number) => {
+  //console.log("ID: ", id  + " Name: " + name + " SubID: " + subid);
+
+
+  if (id) {
+    if (subid > 0) {
+      //console.log("Gear: ", gear[id]);
+      const nameArr : string[] = gear[id]?.subItemNames;
+      const maybeName = nameArr?.find((subgear: string) => subgear.toLowerCase() === name);
+
+      //const maybeName = gear[id]?.subItemNames?.first((subgear: string) => subgear.toLowerCase() === name);
+      if (maybeName) {
+        return maybeName;
+      }
+    }
+
+    return gear[id]?.name;
+  } else {
+    return name;
+  }
+};
+
+const handleOpenGear = (event: MouseEvent, index: number) => {
+  
+    const newOpen: string[] = new Array(basicInfo.equipment?.gear?.length).fill(null);
+    newOpen[index] = "open";
+    //newOpen[index] = "open";
+    event.preventDefault();
+    console.log("Open: ", index);
+    setOpenGear(newOpen);
+  
+    //basicInfo.feats[index].trait
+    const trait = "simple";
+    loadGearList(trait).then((res) => {
+      res.json().then((data) => { 
+        console.log("Gear for trait " + trait +  ": ", data);
+        setGearList(data);
+      })
+    });
+}
+
+const handleCloseGear = (event: MouseEvent, index: number) => {
+  event.preventDefault();
+  const newOpen: string[] = new Array(basicInfo.equipment?.gear?.length).fill(null);
+  console.log("Close: ", index);
+  setOpenGear(newOpen);
+  //console.log("Close: ", index);  
+}
+
+const handleChooseGear = (event: MouseEvent, index: number, onegear: any) => {
+  event.preventDefault();
+  console.log("Choose: ", index);
+  console.log("Gear: ", onegear);
+  const newGearItem = {
+    id: onegear.id,
+    name: onegear.name,
+    subId: onegear.subId
+  };
+  const newGear = [...basicInfo.gearCompact];
+  newGear[index] = newGearItem;
+  handleChangeInfo({ 
+    ...basicInfo,
+    gearCompact: newGear
+  });
+
+  //Copied from handleFeatChange
+  const newGear2 = [...gear];
+  loadGear(onegear.id).then((res) => {  
+    res.json().then
+    ((data) => {
+      //parseInt(event.target.value)  
+      newGear2[data.id] = data;
+      console.log("DATA: ", data);
+      setGear(newGear2);
+    });
+  });
+}
 
 //Lots of ancestries missing
 const traitList = [
@@ -1142,14 +1226,29 @@ const traitList = [
       {/* Gear inputs */}
       <div className="p-3">
         <strong>Gear</strong>
-        {basicInfo.gear?.map((gearItem: number, index: number) => (
+        {basicInfo.gearCompact?.map((gearItem: any, index: number) => (
           <div key={index} className="p-1">
             <input
               className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300"
-              value={gearItem}
+              value={gearItem.id}
               onChange={(event) => handleGearChange(index, event)}
             />
-            {gear[gearItem]?.name}
+            { /* gear[gearItem.id]?.name */ }
+            {getGearName(gearItem.id, gearItem.name, gearItem.subId)}
+            <button onClick={(event) => handleOpenGear(event, index)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+              Edit
+            </button>
+
+            <dialog open={openGear[index]}>
+              {gearList?.map((gear: any, index2: number) => (
+                <button onClick={(event) => handleChooseGear(event, index, gear)} key={index2}>{gear.name}</button>
+              ))}
+              <form method="dialog">
+                <button onClick={(event) => handleCloseGear(event, index)}>OK</button>
+              </form>
+            </dialog>
+
+
           </div>
         ))}
         <button type="button" onClick={addNewGear} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
