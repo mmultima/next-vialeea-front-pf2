@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 
 import Image from 'next/image'
 import { get } from 'http';
+import CastingEdit from './castingedit/castingedit';
 
 async function getData( id: string ) {
   //const res = await fetch('https://vialeea-test.azurewebsites.net/api/char/load', { cache: 'no-store' })
@@ -57,6 +58,7 @@ async function  putData(id: string, data: string) {
   const resdata = await  res.json()
 
   console.log("P Response: ", resdata);
+  return resdata;
 }
 
 
@@ -91,6 +93,39 @@ async function  putBasicInfo(id: string | null, data: string) {
   return resdata;
 }
 
+async function getUserList() {
+  const res = await fetch('/api/user', { cache: 'no-store' })
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch user data')
+  }
+
+  const data = res.json();
+  return data;
+}
+
+async function postCasting() {
+  const res = await fetch('/api/castings', { 
+    cache: 'no-store',
+    method: 'POST',
+    body: JSON.stringify({ className: "bard" })
+  });
+
+  const resdata = await  res.json()
+
+  return resdata;
+}
+
+async function getCasting(id: string) {
+  const res = await fetch('/api/castings/' + id, { cache: 'no-store' })
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch casting data')
+  }
+
+  const data = res.json();
+  return data;
+}
 
 export default function Page({ params }: { params: { par: string } }) {
     //TODO: Error handling on missing data completely broken.
@@ -98,6 +133,15 @@ export default function Page({ params }: { params: { par: string } }) {
     const [imageInput, setImageInput] = useState("");
     const [colourInput, setColourInput] = useState("no colour");
     const [character, setCharacter] = useState({id: '', name: 'no name', image: '', colour: 'no colour', user: ''});
+    const [userInput, setUserInput] = useState("no user");
+    const [openChooseUser, setOpenChooseUser] = useState(false);
+    const [userList, setUserList] = useState([{id: '1', name: 'Bob'}, {id: '2', name: 'Alice'}]);
+    const [id, setId] = useState("");
+
+    const emptyArray: any[]  = [];
+    const [castings, setCastings] = useState(
+      emptyArray
+    );
 
     const handleNameChange = (event: any) => {
       setNameInput(event.target.value);
@@ -116,7 +160,12 @@ export default function Page({ params }: { params: { par: string } }) {
 
 
       console.log("Change colour: ", event);
-    }        
+    }
+    
+    const handleUserChange = (event: any) => {
+      setUserInput(event.target.value);
+    }
+
     //const router = useRouter();
     //const {id} = router.query;
     //"flex min-h-screen flex-col items-center justify-between p-24">
@@ -142,6 +191,8 @@ export default function Page({ params }: { params: { par: string } }) {
       }
     );
 
+
+
     const handleChangeInfo = (basicInfo: any) => {
         setBasicInfo(basicInfo);
     };
@@ -161,6 +212,8 @@ export default function Page({ params }: { params: { par: string } }) {
           setImageInput(character.image);
           setColourInput(character.colour);
           setCharacter(character);
+          setUserInput(character.user);
+          setId(character.id);
           console.log('All data should be set?');
           if (character.basicInfoId) {
               getBasicInfo(character.basicInfoId).then(basicInfo => {
@@ -171,10 +224,15 @@ export default function Page({ params }: { params: { par: string } }) {
           else {
               newBasicInfo(character);
           }
-
-
-
+          if (character.castingIdString) {
+            getCasting(character.castingIdString).then(casting => {
+              setCastings([casting]);
+            });
+          }
         });
+      getUserList().then(userList => {
+        setUserList(userList);
+      });
     }, []);
 
 
@@ -232,7 +290,8 @@ export default function Page({ params }: { params: { par: string } }) {
         ...character, 
         name: nameInput,
         image: imageInput,
-        colour: colourInput
+        colour: colourInput,
+        user: userInput,
       }
 
       console.log("New character: ", newCharacter);
@@ -270,13 +329,51 @@ export default function Page({ params }: { params: { par: string } }) {
     /*                 <button onClick={buttonClick} className="float-right bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"> */
 
     /* https://stackoverflow.com/questions/56233184/float-right-button-without-going-outside-parent-div-tailwindcss */
+    const handleChooseUser = (event: any, user: any) => {
+      event.preventDefault();
+      setUserInput(user.id);
+    }
+
+    const handleOKUser = (event: any) => {
+      event.preventDefault();
+      setOpenChooseUser(false);
+    }
+
+    const handleOpenChooseUser = (event: any) => {
+      event.preventDefault();
+      setOpenChooseUser(true);
+    }
+
+    const getUserName = (id: string) => {
+      const user = userList.find((user: any) => user.id == id);
+      return user ? user.name : "No user";
+    }
+
+    //TODO: Currently supports only one casting
+    const addCasting = (event: any) => {
+      event.preventDefault();
+      postCasting().then((casting: any) => {
+        setCastings([...castings, casting]);
+        const newCharacter = { 
+          ...character, 
+          castingIdString: casting.id
+        };
+        putData(newCharacter.id, JSON.stringify(newCharacter)).then((data) => {
+          setCharacter(data);
+        });
+      });
+    }
 
     return (
       <main className="flex min-h-screen flex-col items-stretch justify-between p-3"> {/*} p-24"> */} 
         <div className="">        
-         <Item name={nameInput} image={imageInput} colour={colourInput} basicInfo={basicInfo}/> 
-         <BasicInfoEdit name={nameInput} image={imageInput} colour={colourInput} basicInfo={basicInfo} handleChangeInfo={handleChangeInfo}/> 
-         
+         <Item name={nameInput} image={imageInput} colour={colourInput} basicInfo={basicInfo} id={id}/> 
+         <BasicInfoEdit name={nameInput} image={imageInput} colour={colourInput} basicInfo={basicInfo} handleChangeInfo={handleChangeInfo}/>
+         {castings?.map((casting: any) => (
+          <CastingEdit castingId={ casting.id } />
+        ))}
+        <button onClick={(event) => addCasting(event) }>Add Casting</button>
+      
           <div className="bg-white w-full hover:bg-sky-100 rounded-lg shadow-lg flex-col items-stretch">
 
 
@@ -293,6 +390,26 @@ export default function Page({ params }: { params: { par: string } }) {
               <div className="p-3">
                 Colour
                 <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={colourInput} onChange={ handleColourChange }></input>
+              </div>
+              <div className="p-3">
+                User: { getUserName(userInput) }
+                <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={userInput} onChange={ handleUserChange }></input>
+
+
+                <button onClick={(event) => handleOpenChooseUser(event) } className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                  Choose
+                </button>
+
+
+                
+            <dialog open={openChooseUser}>
+              {userList?.map((user: any) => (
+                <button onClick={(event) => handleChooseUser(event, user)} key={user.id}>{user.name}</button>
+              ))}
+              <form method="dialog">
+                <button onClick={(event) => handleOKUser(event)}>OK</button>
+              </form>
+            </dialog>
               </div>
 
               <div className="p-3 flex justify-end">

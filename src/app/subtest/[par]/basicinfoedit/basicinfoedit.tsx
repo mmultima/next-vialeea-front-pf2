@@ -617,6 +617,60 @@ const handleSkillChange = (skill: string, event: React.ChangeEvent<HTMLInputElem
   handleChangeInfo(changedInfo);
 }
 
+const handlePfsChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    pfs: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleFactionChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    faction: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleXpProgressionChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    xpProgression: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleSpeedChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    speed: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleExplorationModeChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    explorationMode: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleFocusPointsChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    focusPoints: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
 /*
 const handleAttributeChange = (attribute: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
   const changedInfo = {
@@ -914,6 +968,7 @@ const handleChooseGear = (event: MouseEvent, index: number, onegear: any) => {
   });
 }
 
+
 //Lots of ancestries missing
 const traitList = [
 //  "Ancestry",
@@ -1108,6 +1163,36 @@ const traitList = [
           Thievery
           <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.thievery} onChange={(event) => handleSkillChange('thievery', event)}></input>
         </div>
+        <div className="p-3">
+          Perception
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.skills?.perception} onChange={(event) => handleSkillChange('perception', event)}></input>
+        </div>
+        <div className="p-3">
+          Pfs
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.pfs} onChange={handlePfsChange}></input>
+        </div>
+        <div className="p-3">
+          Faction
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.faction} onChange={handleFactionChange}></input>
+        </div>
+        <div className="p-3">
+          XP Progression
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.xpProgression} onChange={handleXpProgressionChange}></input>
+        </div>
+        <div className="p-3">
+          Speed
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.speed} onChange={handleSpeedChange}></input>
+        </div>
+        <div className="p-3">
+          Exploration Mode
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.explorationMode} onChange={handleExplorationModeChange}></input>
+        </div>
+        <div className="p-3">
+          Focus Points
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.focusPoints} onChange={handleFocusPointsChange}></input>
+        </div>
+
+
 
                   <div className="p-3 flex justify-end">
 

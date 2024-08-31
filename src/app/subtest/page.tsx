@@ -153,7 +153,7 @@ export default async function Page() {
 
     const listItems = data.map((character : any) =>
       <Link href={"subtest/" + character.id}>
-        <Item key={character.id} name={character.name} image={character.image} colour={character.colour} basicInfo={basicInfos[character.basicInfoId]}/>
+        <Item key={character.id} name={character.name} image={character.image} colour={character.colour} basicInfo={basicInfos[character.basicInfoId]} id={character.id}/>
       </Link>
     );
 
