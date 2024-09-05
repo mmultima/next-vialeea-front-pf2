@@ -1299,6 +1299,42 @@ const handleTraditionChange = (event: any) => {
   handleChangeInfo(changedInfo);
 }
 
+const handleLoreNameChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    loreName: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleBotMeChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    botMe: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleCastingAbilityChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    castingAbility: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleMoneyEarnedChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    moneyEarned: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
 const handleOpenSpell = (event :any, index : number) => {
   const newOpen: string[] = new Array(basicInfo.spells?.length).fill(null);
   newOpen[index] = "open";
@@ -1374,6 +1410,26 @@ const switchSpellListType = (event: MouseEvent, category: any) => {
       })
     });
   }
+}
+
+const handleLanguageChange = (index: number, event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    languages: [ ...basicInfo.languages ]
+  };
+  changedInfo.languages[index] = event.target.value;
+
+  handleChangeInfo(changedInfo);
+}
+
+const addNewLanguage = (event : any) => {
+  event.preventDefault();
+
+  const changedInfo = {
+    ...basicInfo,
+    languages: basicInfo.languages ? [...basicInfo.languages, ''] : ['']
+  };
+  handleChangeInfo(changedInfo);
 }
 
 const spellCategoryList = [
@@ -1689,6 +1745,22 @@ const traitList = [
           Tradition
           <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.tradition} onChange={handleTraditionChange}></input>
         </div>
+        <div className="p-3">
+          Lore Name
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.loreName} onChange={handleLoreNameChange}></input>
+        </div>
+        <div className="p-3">
+          Bot Me
+          <textarea className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.botMe} onChange={(event) => handleBotMeChange(event)}></textarea>
+        </div>
+        <div className="p-3">
+          Casting Ability
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.castingAbility} onChange={handleCastingAbilityChange}></input>
+        </div>
+        <div className="p-3">
+          Money Earned
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.moneyEarned} onChange={handleMoneyEarnedChange}></input>
+        </div>
         <div className="p-3 flex">
           Senses:
           <div className="rounded-[7px] px-3 py-2.5 border border-gray-300">
@@ -1798,6 +1870,22 @@ const traitList = [
                   </div> 
 
                   </div>
+
+<div>
+  {basicInfo.languages?.map((language: string, index: number) => (
+    <div key={index} className="p-1">
+      <input
+        className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300"
+        value={language}
+        onChange={(event) => handleLanguageChange(index, event)}
+      />
+      {language}
+    </div>
+  ))}
+  <button type="button" onClick={(event) => addNewLanguage(event)} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+    Add Language
+  </button>
+</div>
 
 
                   <div className="p-3 flex justify-end">
@@ -1986,6 +2074,7 @@ const traitList = [
                   Button
                 </button>
               </div>
+
 
 
                   </form>

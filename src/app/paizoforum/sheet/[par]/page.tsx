@@ -99,6 +99,11 @@ async function loadSpell(id: string): Promise<Response> {
     return res;
 }
 
+async function loadGear(id: string): Promise<Response> {
+    const res = await fetch('/api/nethys/equipment/gear/' + id, { cache: 'no-store' })
+    return res;
+}
+
 export default function Page({ params }: { params: { par: string } }) {
     const emptyArray: any[]  = [];
     const [ myUser, setMyUser ] = useState({ id: 1, name: "Bob", pfs: "100387" });
@@ -119,6 +124,23 @@ export default function Page({ params }: { params: { par: string } }) {
         will: 0,
         perception: 0,
         skills: {
+            acrobatics: 0,
+            arcana: 0,
+            athletics: 0,
+            crafting: 0,
+            deception: 0,
+            diplomacy: 0,
+            intimidation: 0,
+            medicine: 0,
+            nature: 0,
+            occultism: 0,
+            performance: 0,
+            religion: 0,
+            society: 0,
+            stealth: 0,
+            survival: 0,
+            thievery: 0,
+            lore: 0,
             perception: 0
         },
         explorationMode: "no mode",
@@ -144,6 +166,12 @@ export default function Page({ params }: { params: { par: string } }) {
         martial: "untrained",
         feats: [],
         muse: "",
+        languages: [],
+        botMe: "",
+        loreName: "",
+        tradition: "",
+        castingAbility: "cha",
+        moneyEarned: 0
     });  
     const [ casting, setCasting ] = useState({ className: "bard", cantripCount: 0, spellsPerLevel: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] });
 
@@ -161,6 +189,8 @@ export default function Page({ params }: { params: { par: string } }) {
     const [ spells, setSpells ] = useState(emptyArray);
 
     const [ feats, setFeats ] = useState(emptyArray);
+
+    const [ gear, setGear ] = useState(emptyArray);
 
     //const myUser = { id: 1, name: "Bob", pfs: "100387" };
     //const myCharacter = { name: "Ulvard", pfs: "2004", class: "Barbarian", level: 2, faction: "Envoy's Allience", xp: "normal" };
@@ -195,6 +225,23 @@ export default function Page({ params }: { params: { par: string } }) {
                     will: basicInfo2.will,
                     skills: {
                         ...basicInfo.skills,
+                        acrobatics: basicInfo2.skills.acrobatics,
+                        arcana: basicInfo2.skills.arcana,
+                        athletics: basicInfo2.skills.athletics,
+                        crafting: basicInfo2.skills.crafting,
+                        deception: basicInfo2.skills.deception,
+                        diplomacy: basicInfo2.skills.diplomacy,
+                        intimidation: basicInfo2.skills.intimidation,
+                        medicine: basicInfo2.skills.medicine,
+                        nature: basicInfo2.skills.nature,
+                        occultism: basicInfo2.skills.occultism,
+                        performance: basicInfo2.skills.performance,
+                        religion: basicInfo2.skills.religion,
+                        society: basicInfo2.skills.society,
+                        stealth: basicInfo2.skills.stealth,
+                        survival: basicInfo2.skills.survival,
+                        thievery: basicInfo2.skills.thievery,
+                        lore: basicInfo2.skills.lore,
                         perception: basicInfo2.skills.perception
                     },
                     focusPoints: basicInfo2.focusPoints,
@@ -220,7 +267,13 @@ export default function Page({ params }: { params: { par: string } }) {
                     martial: basicInfo2.martial,
                     feats: basicInfo2.feats,
                     spells: basicInfo2.spells,
-                    muse: basicInfo2.muse
+                    muse: basicInfo2.muse,
+                    languages: basicInfo2.languages,
+                    botMe: basicInfo2.botMe,
+                    loreName: basicInfo2.loreName,
+                    tradition: basicInfo2.tradition,
+                    castingAbility: basicInfo2.castingAbility,
+                    moneyEarned: basicInfo2.moneyEarned
                 };
                 setBasicInfo(newBasicInfo);
                 loadHeritageList(basicInfo2.ancestry).then((res: any) => {
@@ -275,7 +328,8 @@ export default function Page({ params }: { params: { par: string } }) {
                                         ...res[i],
                                         name: res[i].name + " (2H)",
                                         damage: res[i].twoHandedDamage,
-                                        id: res[i].id + "-2h"
+                                        id: res[i].id + "-2h",
+                                        pseudoItem: true
                                     }
                                     myWeapons.push(newWeapon);
                                 }
@@ -284,6 +338,20 @@ export default function Page({ params }: { params: { par: string } }) {
                             setWeapons(myWeapons);
                         }));
                 }
+                if (basicInfo2.gearCompact) {
+                    console.log("Gear: ", basicInfo2.gearCompact);
+                    Promise.all(basicInfo2.gearCompact.map((item: any) => {
+                        return loadGear(item.id);
+                    })).then((res: any[]) => 
+                        Promise.all( 
+                            res.map((item: any) => item.json()
+                            )
+                        ).then((res: any[]) => {
+                            console.log("Gear Res: ", res);
+                            setGear(res);
+                        }));
+                }
+
                 if (basicInfo2.spells) {
                     Promise.all(basicInfo2.spells.map((item: string) => {
                         return loadSpell(item);
@@ -353,6 +421,79 @@ Level: 2
 Faction: Envoy's Allience
 XP Progression (slow/normal): normal
 */
+    const makeMoneyString = (weapons: any[], armor: any[], gear: any[], moneyEarned: number) => {
+        const money = {
+            cp: 0,
+            sp: 0,
+            gp: 0,
+            pp: 0
+        };
+
+        let myMoney = moneyEarned;
+
+
+
+        weapons.forEach((weapon: any) => {
+            myMoney -= weapon.priceInCopper;
+        });
+
+
+
+
+        armor.forEach((armor: any) => {
+            myMoney -= armor.priceInCopper;
+        });
+
+       
+        gear.forEach((gear: any) => {
+            myMoney -= gear.pricesInCopper[0];
+        });
+
+
+
+        /*
+       weapons.forEach((weapon: any) => {
+            money.cp += weapon.priceInCopper % 10;
+            money.sp += ((weapon.priceInCopper / 10) | 0) % 10;
+            money.gp += ((weapon.priceInCopper / 100) | 0);
+//            money.pp += weapon.cost            
+        });
+
+        armor.forEach((armor: any) => {
+            money.cp += armor.priceInCopper % 10;
+            money.sp += ((armor.priceInCopper / 10) | 0) % 10;
+            money.gp += ((armor.priceInCopper / 100) | 0);
+            //money.pp += armor.cost.pp;
+        });
+
+        gear.forEach((gear: any) => {
+            money.cp += gear.pricesInCopper[0] % 10;
+            money.sp += ((gear.pricesInCopper[0] / 10) | 0) % 10;
+            money.gp += ((gear.pricesInCopper[0] / 100) | 0);
+            //money.pp += gear.cost.pp;
+        });
+*/
+        money.cp += myMoney % 10;
+        money.sp += ((myMoney / 10) | 0) % 10;
+        money.gp += ((myMoney / 100) | 0);
+
+
+        return "" + money.gp + " gp, " +  money.sp + " sp, " + money.cp + " cp ";
+    }
+
+    const calculateBulk = (weapons: any[], armor: any[], gear: any[]) => {
+        var bulk :number= 0;
+        weapons.forEach((weapon: any) => {
+            bulk += weapon.bulk === "L" ? 0.1 : weapon.bulk ? +weapon.bulk : 0;
+        });
+        armor.forEach((armor: any) => {
+            bulk += armor.bulk === "L" ? 0.1 : armor.bulk ? +armor.bulk : 0;
+        });
+        gear.forEach((gear: any) => {
+            bulk += gear.bulks[0] === "L" ? 0.1 : gear.bulks[0] ? +gear.bulks[0] : 0;
+        });
+        return bulk.toFixed(1);
+    }
 
     const capitalizeFirstLetter = (myString : string) => {
         return myString ? myString.charAt(0).toUpperCase() + myString.slice(1) : "";
@@ -526,6 +667,48 @@ XP Progression (slow/normal): normal
 
     const numberAbbrevs = ["", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"];
 
+    const skillToStat = ( skill: string ) => {
+        switch(skill) {
+            case "acrobatics":
+                return "dex";
+            case "arcana":
+                return "int";
+            case "athletics":
+                return "str";
+            case "crafting":
+                return "int";
+            case "deception":
+                return "cha";
+            case "diplomacy":
+                return "cha";
+            case "intimidation":
+                return "cha";
+            case "medicine":
+                return "wis";
+            case "nature":
+                return "wis";
+            case "occultism":
+                return "int";
+            case "performance":
+                return "cha";
+            case "religion":
+                return "wis";
+            case "society":
+                return "int";
+            case "stealth":
+                return "dex";
+            case "survival":
+                return "wis";
+            case "thievery":
+                return "dex";
+            case "lore":
+                return "int";
+            case "perception":
+                return "wis";
+        }
+        return "str";
+    }
+
     const skillsToStats = {
         "acrobatics": "dex",
         "arcana": "int",
@@ -546,6 +729,66 @@ XP Progression (slow/normal): normal
         "lore": "int",
         "perception": "wis"
     };
+
+    const attributeToBasicInfoAttribute = ( attribute: string ) => {
+        switch(attribute) {
+            case "str":
+                return basicInfo.strength;
+            case "dex":
+                return basicInfo.dexterity;
+            case "con":
+                return basicInfo.constitution;
+            case "int":
+                return basicInfo.intelligence;
+            case "wis":
+                return basicInfo.wisdom;
+            case "cha":
+                return basicInfo.charisma;
+        }
+        return 0;
+    };
+
+    const skillNameToBasicInfoSkill = ( skill: string ) => {
+        switch(skill) {
+            case "acrobatics":
+                return basicInfo.skills.acrobatics;
+            case "arcana":
+                return basicInfo.skills.arcana;
+            case "athletics":
+                return basicInfo.skills.athletics;
+            case "crafting":
+                return basicInfo.skills.crafting;
+            case "deception":
+                return basicInfo.skills.deception;
+            case "diplomacy":
+                return basicInfo.skills.diplomacy;
+            case "intimidation":
+                return basicInfo.skills.intimidation;
+            case "medicine":
+                return basicInfo.skills.medicine;
+            case "nature":
+                return basicInfo.skills.nature;
+            case "occultism":
+                return basicInfo.skills.occultism;
+            case "performance":
+                return basicInfo.skills.performance;
+            case "religion":
+                return basicInfo.skills.religion;
+            case "society":
+                return basicInfo.skills.society;
+            case "stealth":
+                return basicInfo.skills.stealth;
+            case "survival":
+                return basicInfo.skills.survival;
+            case "thievery":
+                return basicInfo.skills.thievery;
+            case "lore":
+                return basicInfo.skills.lore;
+            case "perception":
+                return basicInfo.skills.perception;
+        }
+        return 0;
+    }
 
     const senses = [
         { name: "Low-light vision", key: "lowLightVision" },
@@ -603,152 +846,65 @@ XP Progression (slow/normal): normal
 <div>
 [b]Ancestry Feats & Abilities[/b] { getHeritageName(basicInfo.heritage) }{ feats.filter(feat => feat.traits.some((trait:any) => trait.name === getAncestryName(basicInfo.ancestry))).map((feat) => <span key={feat.id}>, { feat.name } </span>) }
 </div>
-{ /* feat => feat.traits.includes((trait:any) => trait.name !== getAncestryName(basicInfo.ancestry)) */ }
-{ getHeritageName(basicInfo.heritage) }
-{ feats.filter(feat => feat.traits.some((trait:any) => trait.name === getAncestryName(basicInfo.ancestry))).map((feat) => <span key={feat.id}>Feat: { feat.name } </span>) }<br></br>
-[b]General/Skill Feats[/b] Experienced Smuggler, Fascinating Performance, Intimidating Glare, Virtuosic Performer<br></br>
-{ feats.filter(feat => feat.traits.some((trait:any) => (trait.name === "General") || (trait.name === "Skill"))).map((feat) => <span key={feat.id}>Feat: { feat.name } </span>) }<br></br>
-[b]Class Features & Abilities[/b] Bloodline: Elemental (air), Bard Dedication, Signature Spells, Basic Muse's Whisper: Multifarious Muse (Enigma + Polymath, gain Versatile Performance)<br></br>
-{ basicInfo.muse ? basicInfo.muse : "" }<br></br>
-{ feats.filter(feat => feat.traits.some((trait:any) => (trait.name === capitalizeFirstLetter(basicInfo.charClass)))).map((feat) => <span key={feat.id}>Feat: { feat.name } </span>) }<br></br>
-[b]Skills[/b] Acrobatics +13 (E), Deception +11 (T), Diplomacy +11 (T), Intimidation +11 (T), Lore: Herbalism +9 (T, Pathfinder), Lore: Underworld +9 (T), Nature +8 (T), Occultism +9 (T), Perform +13/+15 dance (E), Stealth +10 (T), Thievery +10 (T)<br></br>
-[b]Languages[/b] Common, Elven, Orcish, Bhopan<br></br>
+<div>
+[b]General/Skill Feats[/b] { feats.filter(feat => feat.traits.some((trait:any) => (trait.name === "General") || (trait.name === "Skill"))).map((feat) => <span key={feat.id}>{ feat.name } </span>) }<br></br>
+</div>
+<div>
+[b]Class Features & Abilities[/b] { basicInfo.muse ? basicInfo.muse : "" }
+{ feats.filter(feat => feat.traits.some((trait:any) => (trait.name === capitalizeFirstLetter(basicInfo.charClass)))).map((feat) => <span key={feat.id}>, { feat.name } </span>) }
+</div>
+<div>
+[b]Skills[/b] 
+
+{ skillsToStats ? Object.keys(skillsToStats)
+.filter((skill) => (skillNameToBasicInfoSkill(skill) - attributeToBasicInfoAttribute(skillToStat(skill)) > 0) && (skill !== "perception"))
+.map((skill: string) => <span key={skill}> {capitalizeFirstLetter(skill)} +{skillNameToBasicInfoSkill(skill)} ({calculateTrained(skillNameToBasicInfoSkill(skill), attributeToBasicInfoAttribute(skillToStat(skill)), basicInfo.level)}{skill==="lore"?" (" + basicInfo.loreName + ")":""}),</span>) : "" }
+
+</div>
+
+<div>
+[b]Languages[/b] { basicInfo.languages.join(", ") }
+</div>
 -------------------- <br></br>
 [b]Spells[/b]<br></br>
-{ true ? spells.map((spell: any) => <span key={spell.id}>{spell.name}<br></br></span>) : ""}<br></br>
 
 [b]Composition[/b] { spells.filter(spell => spell.traits.some((trait : any) => trait.name === "Composition") && spell.traits.every((trait : any) => trait.name !== "Focus")).map((spell: any) => <span key={spell.id}>{spell.name}<br></br></span>) }<br></br>
 [b]Composition Focus[/b] { spells.filter(spell => spell.traits.some((trait : any) => trait.name === "Composition") && spell.traits.some((trait : any) => trait.name === "Focus")).map((spell: any) => <span key={spell.id}>{spell.name}<br></br></span>) }<br></br>
 [b]Cantrip[/b] { spells.filter(spell => spell.traits.every((trait : any) => trait.name !== "Composition") && spell.traits.some((trait : any) => trait.name === "Cantrip")).map((spell: any) => <span key={spell.id}>{spell.name}<br></br></span>) }<br></br>
 [b]1st Level ({casting?.spellsPerLevel[0]}/day)[/b] { spells.filter(spell => spell.traits.every((trait : any) => trait.name !== "Composition") && spell.traits.every((trait : any) => trait.name !== "Cantrip") && spell.level === 1).map((spell: any) => <span key={spell.id}>{spell.name}<br></br></span>) }<br></br>
 
-
-
-Spell attack rolls (primal) +11 (T)<br></br>
-Spell DC (primal) 21 (T)<br></br>
-[b]Focus:[/b] Elemental toss<br></br>
-[b]Cantrips:[/b] Produce flame (air)(BL), Stabilize, Guidance, Tanglefoot, Prestidigitation, Shield (Bard). Mage Hand (Bard)<br></br>
-[b]1-Level:[/b] Burning hands (air)(BL)(Signature), Gust of wind, Air Bubble, Feather Fall<br></br>
-[b]2-Level:[/b] Resist Energy (BL), Glitterdust, Heal (Signature), Darkness<br></br>
-[b]3-Level:[/b] Fireball (air)(BL), Jump (Signature), Earthbind<br></br>
-[spoiler=Spell details]<br></br>
-Elemental toss<br></br>
-range 30<br></br>
-attack +11<br></br>
-damage 3d8 (+3 with Blood magic)<br></br>
-<br></br>
-Burning hands [i]Vilinmat[/i]<br></br>
-area 15 cone<br></br>
-damage<br></br>
-1st: 2d6 (+1 with blood magic)<br></br>
-2nd: 4d6 (+2 with blood magic)<br></br>
-3rd: 6d6 (+3 with blood magic)<br></br>
-<br></br>
-Gust of wind [i]Alaco[/i]<br></br>
-Area 60 line<br></br>
-Save Fortitude<br></br>
-Crit success no effect<br></br>
-Success cannot move against wind<br></br>
-Failure Fall prone (flying gets crit failure)<br></br>
-Crit failure Pushed 30, fall prone, 2d6 damage<br></br>
-<br></br>
-Heal<br></br>
-Single action touch +1d8/level<br></br>
-Double action 30 +1d8+8 / level [i]Envinyata(rahta)[/i]<br></br>
-Triple action 30 burst +1d8/level [i]Envinyataliltë[/i]<br></br>
-damage same, except for double action +8<br></br>
-<br></br>
-<br></br>
-Produce flame [i]Coronvilin[/i]<br></br>
-Range 30<br></br>
-attack +10<br></br>
-damage 3d4 +4<br></br>
-+3d4 persistent damage on crit<br></br>
-<br></br>
-Glitterdust [i]Tinwëasto[/i]<br></br>
-<br></br>
-Feather fall [i]Quessë(lanta)[/i]<br></br>
-<br></br>
-Air bubble [i]Vilyawelvë[/i]<br></br>
-<br></br>
-Shield [i]Thand[/i]<br></br>
-<br></br>
-Resist Energy (fire) [i]Nornaur[/i]<br></br>
-<br></br>
-Guidance [i]Hilyani[/i]<br></br>
-<br></br>
-[/spoiler]<br></br>
+Spell attack rolls ({basicInfo.tradition}) +{attributeToBasicInfoAttribute(basicInfo.castingAbility) + basicInfo.level + 2} (T)<br></br>
+Spell DC ({basicInfo.tradition}) +{attributeToBasicInfoAttribute(basicInfo.castingAbility) + basicInfo.level + 2 + 10} (T)<br></br>
+{ /* TODO: Get the trained status from the correct place, not here. */}
 -------------------- <br></br>
 [b]Special Abilities[/b] <br></br>
 <br></br>
-1 Focus Point. Refocus 10 min (doing anything, unlike most other classes) or morning prep.<br></br>
-Blood magic: After casting Bloodline spell (BL) or Focus spell, +1 per spell level extra damage, or +1 status bonus to intimidation for 1 round.<br></br>
+{ basicInfo.focusPoints > 0 ? "1 Focus Point. Refocus 10 min." : "" }<br></br>
 -------------------- <br></br>
-[b]Gear:[/b] Adventurer's pack 2 (7s), Fine clothes 0,1 (2g), Religious symbol, silver (Desna, fan) 0,1 (2g), Dagger 0,1 (2sp), Sheath - (1cp), Thieves' tools 0,1, Dancing Scarf, Wand of Mage Armor, Radiant Wayfinder with custom lid 'Lindevaile Tindome', Disguise Kit 0,1, Scrolls of Fleet Step, Jump, Hat of Disguise, 5 lesser elixirs of darkvision, Boots of Elvenkind 0,1<br></br>
+<div>
+[b]Gear: [/b] 
+{ weapons.filter((weapon: any) => !weapon.pseudoItem).map((weapon: any) => <span key={weapon.id}>{weapon.name}{weapon.purchaseAmount?" ("+weapon.purchaseAmount+")":""}, </span>) }
+{ armor.map((armor: any) => <span key={armor.id}>{armor.name}, </span>) }
+{ gear.map((gear: any) => <span key={gear.id}>{gear.name}, </span>) }
+</div>
+
+{ /*weapons.filter((weapon: any) => !weapon.pseudoItem).map((weapon: any) => <span key={weapon.id}>{weapon.name} {weapon.purchaseAmount?"("+weapon.purchaseAmount+")":""} P: {weapon.priceInCopper} B: {weapon.bulk}</span>) }
+{ armor.map((armor: any) => <span key={armor.id}>{armor.name} P: {armor.priceInCopper} B: {armor.bulk}</span>) }
+{ gear.map((gear: any) => <span key={gear.id}>{gear.name} P: { gear.pricesInCopper[0] } B: {gear.bulks[0]}</span>) }
+{ /* TODO: Make it so that it works correctly for subitems. */}
 <br></br>
-[b]Money[/b] 71g 8s 3c<br></br>
-[b]Bulk[/b] 2,6 (5/10)<br></br>
+[b]Money[/b] {makeMoneyString(weapons.filter((weapon: any) => !weapon.pseudoItem), armor, gear, +basicInfo.moneyEarned)}<br></br>
+[b]Bulk[/b] {calculateBulk(weapons.filter((weapon: any) => !weapon.pseudoItem), armor, gear) } ({5+basicInfo.strength}/{10+basicInfo.strength})<br></br>
 -------------------- <br></br>
 [b]Organized Play Notes[/b]<br></br>
 <br></br>
-97350-2001<br></br>
-<br></br>
-Faction: Radiant Oath <br></br>
-Training: Spells<br></br>
-<br></br>
-Scroll: Restoration<br></br>
-Lore: Herbalism<br></br>
-<br></br>
-[spoiler=Spell action costs]<br></br>
-S=Somatic<br></br>
-V=Verbal<br></br>
-M=Material<br></br>
-<br></br>
-Focus: <br></br>
-S Elemental toss <br></br>
-<br></br>
-Cantrips: <br></br>
-SV Produce flame (air)(BL)<br></br>
-SV Stabilize<br></br>
-V Guidance<br></br>
-SV Tanglefoot<br></br>
-SV Prestidigitation<br></br>
-SV Mage Hand<br></br>
-V Shield<br></br>
-<br></br>
-1-Level: <br></br>
-SV Burning hands (air)(BL)<br></br>
-SV Gust of wind<br></br>
-V react Air bubble<br></br>
-V react Feather Fall<br></br>
-<br></br>
-2-Level: <br></br>
-SV Glitterdust<br></br>
-SV Resist Energy<br></br>
-S, SV, SVM Heal<br></br>
-[/spoiler]<br></br>
-<br></br>
+{myUser.pfs}-{basicInfo.pfs}<br></br>
+Faction: Grand Archive <br></br>
+Item: Oil Of Potency<br></br>
 [spoiler=Bot me]<br></br>
-◆◆ [b][[/b]ooc]Produce Flame (air)[/ooc] [dice=Attack]1d20 + 11[/dice] [dice=Damage (bludgeon)]3d4 + 4[/dice]<br></br>
-◆ [b][[/b]ooc]Elemental toss (air)[/ooc] [dice=Attack]1d20 + 11[/dice] [dice=Damage (bludgeon)]3d8 + 3[/dice]<br></br>
-◆◆◆ [b][[/b]ooc]Heal 3 action[/ooc] [dice=Damage]3d8[/dice]<br></br>
-◆◆ [b][[/b]ooc]Heal 2 action[/ooc] [dice=Damage]3d8 + 24[/dice]<br></br>
-◆◆ [b][[/b]ooc]Burning hands (air)[/ooc] [dice=Damage (bludgeon)]6d6 + 3[/dice] [b][[/b]ooc]DC 21 Reflex[/ooc]<br></br>
-◆◆ [b][[/b]ooc]Gust of Wind[/ooc] [dice=Damage (bludgeon)]2d6[/dice] [b][[/b]ooc]DC 21 Fortitude[/ooc]<br></br>
-◆◆ [b][[/b]ooc]Glitterdust[/ooc][[/b]ooc]DC 21 Reflex[/ooc]<br></br>
-◆ [dice=Demoralize (Versatile Performance)]1d20 + 15[/dice]<br></br>
-<br></br>
-Priority:<br></br>
-<br></br>
-Heal anyone in danger of dropping or dying.<br></br>
-<br></br>
-Use Gust of Wind for control in tight spaces or against flying enemies. Tanglefoot if it will help. Glitterdust for invisible.<br></br>
-<br></br>
-Use damage spells, burning hands if it would hit several targets or produce flame for single target. Heal against undead. Elemental toss if need to move a lot or after burning hands as it doesn't trigger multiattack penalty. [b]Remember that blood magic gives +1/spell level to damage (not to heal)[/b]<br></br>
-<br></br>
-For leftover actions, shield, guidance, demoralize (with intimidating glare can affect even if no common language), or even fascinating performance if it would disturb enemy's concentration.<br></br>
-<br></br>
-[b]Remember to save people with feather fall / air bubble reactions.[/b]<br></br>
+<pre>
+{basicInfo.botMe}<br></br>
+</pre>
 [/spoiler]<br></br>
 <br></br>
 [spoiler=PbP icons]<br></br>
