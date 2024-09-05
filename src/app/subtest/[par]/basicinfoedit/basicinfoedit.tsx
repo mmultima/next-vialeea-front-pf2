@@ -96,6 +96,36 @@ async function loadGearList(par: string) {
   return res;
 }
 
+async function loadAncestries() {
+  const res = await fetch('/api/nethys/ancestries', { cache: 'no-store' })
+  return res;
+}
+
+async function loadHeritageList(par: string): Promise<Response> {
+  const res = await fetch('/api/nethys/heritages/' + par, { cache: 'no-store' })
+  return res;
+}
+
+async function loadBackgroundList(): Promise<Response> {
+  const res = await fetch('/api/nethys/backgrounds', { cache: 'no-store' })
+  return res;
+}
+
+async function loadBackground(id: string): Promise<Response> {
+  const res = await fetch('/api/nethys/backgrounds/' + id, { cache: 'no-store' })
+  return res;
+}
+
+async function loadSpellList(traits: string[], Level: number, tradition? : string): Promise<Response> {
+  //http://localhost:3000/api/nethys/spells?Trait=focus&Trait=bard&Level=1
+  const trad = tradition ? "&tradition=" + tradition : "";
+
+  console.log("Traits: ", traits);
+
+  const res = await fetch('/api/nethys/spells?' + traits.map(trait => "Trait=" + trait ).join("&") + "&level=" + Level + trad, { cache: 'no-store' })
+  return res;
+}
+
 export default function BasicInfoEdit({ name, image, colour, basicInfo, handleChangeInfo } : Props) {
     console.log("Class: ", basicInfo.charClass);
 
@@ -131,6 +161,17 @@ export default function BasicInfoEdit({ name, image, colour, basicInfo, handleCh
     const [weaponList, setWeaponList] = useState(emptyArray);
     const [armorList, setArmorList] = useState(emptyArray);
     const [gearList, setGearList] = useState(emptyArray);
+    const [spellList, setSpellList] = useState(emptyArray);
+
+    const [openAncestry, setOpenAncestry] = useState(false);
+    const [openHeritage, setOpenHeritage] = useState(false);
+    const [ancestries, setAncestries] = useState(emptyArray);
+    const [heritages, setHeritages] = useState(emptyArray);
+    const [openBackground, setOpenBackground] = useState(false);
+    const [backgroundList, setBackgroundList] = useState(emptyArray); //OOps, the naming is here wrong, it should be backgrounds.
+    const [backgrounds, setBackgrounds] = useState(emptyArray); //OOps, the naming is here wrong, it should be backgroundsList.
+
+    const [openSpell, setOpenSpell] = useState(emptyArray);
 
     if (!colour) {
       colour = "";
@@ -432,7 +473,34 @@ useEffect(() => {
       console.log("DATA: ", dataArray);
       setSpells(() => newSpells2);
     });
+
+    if (basicInfo.ancestry) {
+      loadHeritages(basicInfo.ancestry);
+    }
+
+    if (basicInfo.background) {
+      loadBackground(basicInfo.background).then((res) => {
+        res.json().then((data) => { 
+          console.log("Background: ", data);
+
+          const newBackgrounds2 = backgroundList;
+          newBackgrounds2[data.id] = data;
+          
+          //console.log("DATA: ", dataArray);
+          setBackgroundList(newBackgrounds2);
+
+
+        })
+      });
+    }
   }
+
+  loadAncestries().then((res) => {
+    res.json().then((data) => { 
+      console.log("Ancestries: ", data);
+      setAncestries(data);
+    })
+  });
 
     console.log("BasicInfo after: ", basicInfo);
   }
@@ -671,6 +739,41 @@ const handleFocusPointsChange = (event: any) => {
   handleChangeInfo(changedInfo);
 }
 
+const handleSizeChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    size: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleAncestryChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    ancestry: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleHeritageChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    heritage: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const loadHeritages = (par: string) => {
+  loadHeritageList(par).then((res) => {
+    res.json().then((data) => { 
+      console.log("Heritages for ancestry " + par +  ": ", data);
+      setHeritages(data);
+    })
+  });
+}
 /*
 const handleAttributeChange = (attribute: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
   const changedInfo = {
@@ -968,6 +1071,381 @@ const handleChooseGear = (event: MouseEvent, index: number, onegear: any) => {
   });
 }
 
+const handleOpenAncestry = (event: MouseEvent) => { 
+  event.preventDefault();
+  console.log("Open Ancestry");
+
+  setOpenAncestry(true);
+}
+
+const handleCloseAncestry = (event: MouseEvent) => {
+  event.preventDefault();
+  console.log("Close Ancestry");
+  setOpenAncestry(false);
+}
+
+const handleChooseAncestry = (event: MouseEvent, ancestry: any) => {
+  event.preventDefault();
+  console.log("Choose Ancestry: ", ancestry);
+
+  setRace(ancestry.name);
+  const changedInfo = {
+    ...basicInfo,
+    ancestry: ancestry.id,
+    race: ancestry.name
+  };
+  handleChangeInfo(changedInfo);
+  loadHeritages(ancestry.id);
+}
+
+const switchAncestryRarity = (event: MouseEvent, category: string) => {
+  event.preventDefault();
+  console.log("category: ", category);
+//  loadAncestries().then((res) => {
+//    res.json().then((data) => { 
+//      console.log("Ancestries: ", data);
+//      setAncestries(data);
+//    })
+//  });
+}
+
+const getAncestryName = (id: number) => {
+  return ancestries?.find((ancestry: any) => ancestry?.id === id)?.name;
+}
+
+const handleOpenHeritage = (event: MouseEvent) => { 
+  event.preventDefault();
+  console.log("Open Heritage");
+
+  setOpenHeritage(true);
+}
+
+
+const handleCloseHeritage = (event: MouseEvent) => {
+  event.preventDefault();
+  console.log("Close Heritage");
+  setOpenHeritage(false);
+}
+
+const handleChooseHeritage = (event: MouseEvent, heritage: any) => {
+  event.preventDefault();
+  console.log("Choose Heritage: ", heritage);
+
+  const changedInfo = {
+    ...basicInfo,
+    heritage: heritage.id
+  };
+  handleChangeInfo(changedInfo);
+  
+}
+
+const switchHeritageType = (event: MouseEvent, category: string) => {
+  event.preventDefault();
+  console.log("category: ", category);
+//  loadAncestries().then((res) => {
+//    res.json().then((data) => {
+//      console.log("Ancestries: ", data);
+//      setAncestries(data);
+//    })
+//  });
+}
+
+const getHeritageName = (id: number) => {
+  return heritages?.find((heritage: any) => heritage?.id === id)?.name;
+}
+
+const handleOpenBackground = (event: MouseEvent) => {
+  event.preventDefault();
+  console.log("Open Background");
+
+  if (!backgrounds || backgrounds.length === 0) {
+    loadBackgroundList().then((res) => {
+      res.json().then((data) => { 
+        console.log("Backgrounds: ", data);
+        setBackgrounds(data);
+      })
+    });
+  }
+
+  setOpenBackground(true);
+}
+
+const handleCloseBackground = (event: MouseEvent) => {
+  event.preventDefault();
+  console.log("Close Background");
+  setOpenBackground(false);
+}
+
+const handleChooseBackground = (event: MouseEvent, background: any) => {
+  event.preventDefault();
+  console.log("Choose Background: ", background);
+
+  const changedInfo = {
+    ...basicInfo,
+    background: background.id
+  };
+
+  loadBackground(background.id).then((res) => {
+    res.json().then((data) => { 
+      console.log("Background: ", data);
+
+      const newBackgrounds2 = backgroundList;
+      newBackgrounds2[data.id] = data;
+      
+      //console.log("DATA: ", dataArray);
+      setBackgroundList(newBackgrounds2);
+    })
+  });
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleBackgroundChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    background: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const switchBackgroundType = (event: MouseEvent, category: string) => {
+  event.preventDefault();
+  console.log("category: ", category);
+}
+
+const getBackgroundName = (id: number) => {
+  return backgroundList[id]?.name;
+}
+
+const handleLowLightVisionChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    lowLightVision: event.target.checked
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleDarkVisionChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    darkVision: event.target.checked
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleGreaterDarkVisionChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    greaterDarkVision: event.target.checked
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleScentChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    scent: event.target.checked
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleTremorsenseChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    tremorsense: event.target.checked
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleSimpleChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    simple: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleMartialChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    martial: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleMuseChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    muse: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleTraditionChange = (event: any) => {
+  const changedInfo = {
+    ...basicInfo,
+    tradition: event.target.value
+  };
+
+  handleChangeInfo(changedInfo);
+}
+
+const handleOpenSpell = (event :any, index : number) => {
+  const newOpen: string[] = new Array(basicInfo.spells?.length).fill(null);
+  newOpen[index] = "open";
+  event.preventDefault();
+  console.log("Open: ", index);
+  setOpenSpell(newOpen);
+
+  //const trait = "simple";
+  
+  const traits = ["Bard", "Focus"];
+
+  loadSpellList(traits, 1).then((res) => {
+    res.json().then((data) => { 
+      //console.log("Spells for trait " + trait +  ": ", data);
+      setSpellList(data);
+    })
+  });
+  
+}
+
+const handleChooseSpell = (event: MouseEvent, index: number, spell: any) => {
+  event.preventDefault();
+  console.log("Choose: ", index);
+  console.log("Spell: ", spell);
+  const newSpells = [...basicInfo.spells];
+  newSpells[index] = spell.id;
+  handleChangeInfo({ 
+    ...basicInfo,
+    spells: newSpells
+  });
+
+  //Copied from handleFeatChange
+  const newSpells2 = [...spells];
+  loadSpell(spell.id).then((res) => {  
+    res.json().then
+    ((data) => {
+      //parseInt(event.target.value)  
+      newSpells2[data.id] = data;
+      console.log("DATA: ", data);
+      setSpells(newSpells2);
+    });
+  });
+}
+
+const handleCloseSpell = (event: MouseEvent, index: number) => {
+  event.preventDefault();
+  const newOpen: string[] = new Array(basicInfo.spells?.length).fill(null);
+  console.log("Close: ", index);
+  setOpenSpell(newOpen);
+}
+
+const switchSpellListType = (event: MouseEvent, category: any) => {
+  event.preventDefault();
+  console.log("category: ", category);
+  
+  const newTraits = category.traits;
+  if (category.name === "Focus") {
+    newTraits.push(basicInfo.charClass);
+  }
+
+  if (category.name.length === 3 || category.name === "Cantrip") {
+    loadSpellList(newTraits, category.level, basicInfo.tradition).then((res) => {
+      res.json().then((data) => { 
+        console.log("Spells for category " + category +  ": ", data);
+        setSpellList(data);
+      })
+    });
+  } else {
+    loadSpellList(newTraits, category.level).then((res) => {
+      res.json().then((data) => { 
+        console.log("Spells for category " + category +  ": ", data);
+        setSpellList(data);
+      })
+    });
+  }
+}
+
+const spellCategoryList = [
+  { 
+    name: "Focus",
+    traits: ["Focus"],
+    level: 1
+  },
+  { 
+    name: "Composition",
+    traits: ["Composition"],
+    level: 1
+  },
+  { 
+    name: "Cantrip",
+    traits: ["Cantrip"],
+    level: 1
+  },
+  { 
+    name: "1st",
+    traits: [],
+    level: 1
+  },
+  { 
+    name: "2nd",
+    traits: [],
+    level: 2
+  },
+  { 
+    name: "3rd",
+    traits: [],
+    level: 3
+  },
+  { 
+    name: "4th",
+    traits: [],
+    level: 4
+  },
+  { 
+    name: "5th",
+    traits: [],
+    level: 5
+  },
+  { 
+    name: "6th",
+    traits: [],
+    level: 6
+  },
+  { 
+    name: "7th",
+    traits: [],
+    level: 7
+  },
+  { 
+    name: "8th",
+    traits: [],
+    level: 8
+  },
+  { 
+    name: "9th",
+    traits: [],
+    level: 9
+  }
+];
+
+const trainedLevels = [ //TODO: later
+  "untrained",
+  "trained",
+  "expert",
+  "master",
+  "legendary"
+];
 
 //Lots of ancestries missing
 const traitList = [
@@ -1191,7 +1669,135 @@ const traitList = [
           Focus Points
           <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.focusPoints} onChange={handleFocusPointsChange}></input>
         </div>
+        <div className="p-3">
+          Size
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.size} onChange={handleSizeChange}></input>
+        </div>
+        <div className="p-3">
+          Simple
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.simple} onChange={handleSimpleChange}></input>
+        </div>
+        <div className="p-3">
+          Martial
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.martial} onChange={handleMartialChange}></input>
+        </div>
+        <div className="p-3">
+          Muse
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.muse} onChange={handleMuseChange}></input>
+        </div>
+        <div className="p-3">
+          Tradition
+          <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={basicInfo.tradition} onChange={handleTraditionChange}></input>
+        </div>
+        <div className="p-3 flex">
+          Senses:
+          <div className="rounded-[7px] px-3 py-2.5 border border-gray-300">
+          <input type="checkbox" checked={ basicInfo.lowLightVision} onChange={ handleLowLightVisionChange } /> Low-light vision
+          </div>
+          <div className="rounded-[7px] px-3 py-2.5 border border-gray-300">
+          <input type="checkbox" checked={ basicInfo.darkVision } onChange={ handleDarkVisionChange } /> Darkvision
+          </div>
+          <div className="rounded-[7px] px-3 py-2.5 border border-gray-300">
+          <input type="checkbox" checked={ basicInfo.greaterDarkVision } onChange={ handleGreaterDarkVisionChange } /> Greater Darkvision
+          </div>
+          <div className="rounded-[7px] px-3 py-2.5 border border-gray-300">
+          <input type="checkbox" checked={ basicInfo.scent } onChange={ handleScentChange } /> Scent
+          </div>
+          <div className="rounded-[7px] px-3 py-2.5 border border-gray-300">
+          <input type="checkbox" checked={ basicInfo.tremorsense } onChange={ handleTremorsenseChange } /> Tremorsense
+          </div>
+        </div>
+        <div className="p-3 fleax flex-justify-end">
+        <div className="p-3">
+                      <strong>Ancestry</strong>
+   
+                        <div className="p-1">
+                          <input
+                            className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300"
+                            value={basicInfo.ancestry}
+                            onChange={(event) => handleAncestryChange(event)}
+                          />
+                          {"Some ancestry description? " + getAncestryName(basicInfo.ancestry)}
+                          <button onClick={(event) => handleOpenAncestry(event)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                            Edit
+                          </button>
 
+     <dialog open={openAncestry}>
+  {["Common", "Uncommon", "Rare"].map((trait: string, index2: number) => (
+    <button onClick={(event) => switchAncestryRarity(event, trait)} key={index2}>{trait}</button>
+  ))
+  }
+  <br></br>
+  {ancestries.map((ancestry: any, index2: number) => (
+    <button onClick={(event) => handleChooseAncestry(event, ancestry)} key={index2}>{ancestry.name}</button>
+  ))}
+  <form method="dialog">
+    <button onClick={(event) => handleCloseAncestry(event)}>OK</button>
+  </form>
+</dialog>
+                        </div>
+                  </div>
+                  <div className="p-3">
+                      <strong>Heritage</strong>
+   
+                        <div className="p-1">
+                          <input
+                            className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300"
+                            value={basicInfo.heritage}
+                            onChange={(event) => handleHeritageChange(event)}
+                          />
+                          {"Some heritage description? " + getHeritageName(basicInfo.heritage)}
+                          <button onClick={(event) => handleOpenHeritage(event)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                            Edit
+                          </button>
+
+     <dialog open={openHeritage}>
+  {["Race", "Versatile"].map((trait: string, index2: number) => (
+    <button onClick={(event) => switchHeritageType(event, trait)} key={index2}>{trait}</button>
+  ))
+  }
+  <br></br>
+  {heritages.map((heritage: any, index2: number) => (
+    <button onClick={(event) => handleChooseHeritage(event, heritage)} key={index2}>{heritage.name}</button>
+  ))}
+  <form method="dialog">
+    <button onClick={(event) => handleCloseHeritage(event)}>OK</button>
+  </form>
+</dialog>
+                        </div>
+                  </div> 
+
+                  <div className="p-3">
+                      <strong>Background</strong>
+   
+                        <div className="p-1">
+                          <input
+                            className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300"
+                            value={basicInfo.background}
+                            onChange={(event) => handleBackgroundChange(event)}
+                          />
+                          {"Some background description? " + getBackgroundName(basicInfo.background)}
+                          <button onClick={(event) => handleOpenBackground(event)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                            Edit
+                          </button>
+
+     <dialog open={openBackground}>
+  {["BG type 1", "BG type 2"].map((trait: string, index2: number) => (
+    <button onClick={(event) => switchBackgroundType(event, trait)} key={index2}>{trait}</button>
+  ))
+  }
+  <br></br>
+  {backgrounds.map((background: any, index2: number) => (
+    <button onClick={(event) => handleChooseBackground(event, background)} key={index2}>{background.name}</button>
+  ))}
+  <form method="dialog">
+    <button onClick={(event) => handleCloseBackground(event)}>OK</button>
+  </form>
+</dialog>
+                        </div>
+                  </div> 
+
+                  </div>
 
 
                   <div className="p-3 flex justify-end">
@@ -1352,6 +1958,22 @@ const traitList = [
               onChange={(event) => handleSpellChange(index, event)}
             />
             {spells[spell]?.name}
+            <button onClick={(event) => handleOpenSpell(event, index)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+              Edit
+            </button>
+
+            <dialog open={openSpell[index]}>
+              {spellCategoryList.map((category: any, index2: number) => (
+                <button onClick={(event) => switchSpellListType(event, category)} key={index2}>{category.name}</button>
+              ))}
+
+              {spellList?.map((spell: any, index2: number) => (
+                <button onClick={(event) => handleChooseSpell(event, index, spell)} key={index2}>{spell.name}</button>
+              ))}
+              <form method="dialog">
+                <button onClick={(event) => handleCloseSpell(event, index)}>OK</button>
+              </form>
+            </dialog>
           </div>
         ))}
         <button type="button" onClick={addNewSpell} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
