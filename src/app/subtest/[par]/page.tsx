@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 //'use client';
 
 import Image from 'next/image'
+import { get } from 'http';
+import CastingEdit from './castingedit/castingedit';
 
 async function getData( id: string ) {
   //const res = await fetch('https://vialeea-test.azurewebsites.net/api/char/load', { cache: 'no-store' })
@@ -33,15 +35,16 @@ async function getData( id: string ) {
 }
 
 async function postData(id: string, data: string) {
-  const res = await fetch('/api/character/' + id, { 
+  const res = await fetch('/api/character', { 
     cache: 'no-store',
     method: 'POST',
-    body: JSON.stringify({mydata : data})
+    body: JSON.stringify(data)
   });
 
   const resdata = await  res.json();
 
   console.log("Response: ", resdata);
+  return resdata;
 }
 
 
@@ -55,6 +58,7 @@ async function  putData(id: string, data: string) {
   const resdata = await  res.json()
 
   console.log("P Response: ", resdata);
+  return resdata;
 }
 
 
@@ -63,6 +67,65 @@ function handleChange(event: Event) {
   console.log("Change: ", event);
 }
 */
+async function getBasicInfo( id: string ) {
+  const res = await fetch('/api/basicinfo/' + id, { cache: 'no-store' })
+  console.log("Hello!");
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch basicinfo data')
+  }
+
+  const data = res.json();
+  return data;
+}
+
+//TODO: This is duplicated in basicinfoedit.tsx
+async function  putBasicInfo(id: string | null, data: string) {
+  const res = await fetch('/api/basicinfo/' + id, { 
+    cache: 'no-store',
+    method: 'PUT',
+    body: JSON.stringify(data)
+  });
+
+  const resdata = await  res.json()
+
+  console.log("BasicInfo default page put Response: ", resdata);
+  return resdata;
+}
+
+async function getUserList() {
+  const res = await fetch('/api/user', { cache: 'no-store' })
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch user data')
+  }
+
+  const data = res.json();
+  return data;
+}
+
+async function postCasting() {
+  const res = await fetch('/api/castings', { 
+    cache: 'no-store',
+    method: 'POST',
+    body: JSON.stringify({ className: "bard" })
+  });
+
+  const resdata = await  res.json()
+
+  return resdata;
+}
+
+async function getCasting(id: string) {
+  const res = await fetch('/api/castings/' + id, { cache: 'no-store' })
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch casting data')
+  }
+
+  const data = res.json();
+  return data;
+}
 
 export default function Page({ params }: { params: { par: string } }) {
     //TODO: Error handling on missing data completely broken.
@@ -70,6 +133,15 @@ export default function Page({ params }: { params: { par: string } }) {
     const [imageInput, setImageInput] = useState("");
     const [colourInput, setColourInput] = useState("no colour");
     const [character, setCharacter] = useState({id: '', name: 'no name', image: '', colour: 'no colour', user: ''});
+    const [userInput, setUserInput] = useState("no user");
+    const [openChooseUser, setOpenChooseUser] = useState(false);
+    const [userList, setUserList] = useState([{id: '1', name: 'Bob'}, {id: '2', name: 'Alice'}]);
+    const [id, setId] = useState("");
+
+    const emptyArray: any[]  = [];
+    const [castings, setCastings] = useState(
+      emptyArray
+    );
 
     const handleNameChange = (event: any) => {
       setNameInput(event.target.value);
@@ -88,7 +160,12 @@ export default function Page({ params }: { params: { par: string } }) {
 
 
       console.log("Change colour: ", event);
-    }        
+    }
+    
+    const handleUserChange = (event: any) => {
+      setUserInput(event.target.value);
+    }
+
     //const router = useRouter();
     //const {id} = router.query;
     //"flex min-h-screen flex-col items-center justify-between p-24">
@@ -102,18 +179,30 @@ export default function Page({ params }: { params: { par: string } }) {
         fort : 5,
         will : 4,
         ref : 6,
-        AC : 17,
-        HP : 14,
+        ac : 17,
+        hp : 14,
         race : "elf",
-        gender : "Female"
+        strength: 0,
+        dexterity: 0,
+        constitution: 0,
+        intelligence: 0,
+        wisdom: 0,
+        charisma: 0
       }
     );
+
+
 
     const handleChangeInfo = (basicInfo: any) => {
         setBasicInfo(basicInfo);
     };
 
     useEffect(() => {
+      if (params.par == "0") {
+        console.log('No params');
+        return;
+      }
+
       console.log('effect');
       getData(params.par)
       .then(character => {
@@ -123,9 +212,48 @@ export default function Page({ params }: { params: { par: string } }) {
           setImageInput(character.image);
           setColourInput(character.colour);
           setCharacter(character);
+          setUserInput(character.user);
+          setId(character.id);
           console.log('All data should be set?');
+          if (character.basicInfoId) {
+              getBasicInfo(character.basicInfoId).then(basicInfo => {
+                  console.log('promise fulfilled ', basicInfo);
+                  setBasicInfo(basicInfo);
+              });
+          }
+          else {
+              newBasicInfo(character);
+          }
+          if (character.castingIdString) {
+            getCasting(character.castingIdString).then(casting => {
+              setCastings([casting]);
+            });
+          }
         });
+      getUserList().then(userList => {
+        setUserList(userList);
+      });
     }, []);
+
+
+    const newBasicInfo = (character: any) => {
+      putBasicInfo(null, JSON.stringify(basicInfo)).then(basicInfo => {
+        console.log('promise fulfilled ', basicInfo);
+        //setBasicInfo(basicInfo);
+        const newCharacter = { 
+          ...character, 
+          basicInfoId: basicInfo.id
+        };
+        setCharacter(newCharacter);
+
+        console.log("FAIL here? New character: ", newCharacter);
+
+        putData(newCharacter.id, JSON.stringify(newCharacter));
+
+        handleChangeInfo(basicInfo);
+        //setCharacterBasicInfo
+      });
+    }
 
     //const character = await getData(params.par);
 
@@ -162,15 +290,30 @@ export default function Page({ params }: { params: { par: string } }) {
         ...character, 
         name: nameInput,
         image: imageInput,
-        colour: colourInput
+        colour: colourInput,
+        user: userInput,
       }
 
       console.log("New character: ", newCharacter);
 
       event.preventDefault();
       console.log("Button clicked", event);
-      postData("myid", "mydata");
-      putData(newCharacter.id, JSON.stringify(newCharacter));
+      //postData("myid", "mydata");
+
+      //console.log("New character: ", newCharacter);
+
+      if (newCharacter.id != '') {
+
+        putData(newCharacter.id, JSON.stringify(newCharacter));
+      }
+      else {
+        console.log("New character: ");
+        postData(newCharacter.id, JSON.stringify(newCharacter)).then( (data) => {
+          setCharacter(data);
+          newBasicInfo(newCharacter);
+        } 
+        )
+      }
     };
     
 /*
@@ -186,13 +329,51 @@ export default function Page({ params }: { params: { par: string } }) {
     /*                 <button onClick={buttonClick} className="float-right bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"> */
 
     /* https://stackoverflow.com/questions/56233184/float-right-button-without-going-outside-parent-div-tailwindcss */
+    const handleChooseUser = (event: any, user: any) => {
+      event.preventDefault();
+      setUserInput(user.id);
+    }
+
+    const handleOKUser = (event: any) => {
+      event.preventDefault();
+      setOpenChooseUser(false);
+    }
+
+    const handleOpenChooseUser = (event: any) => {
+      event.preventDefault();
+      setOpenChooseUser(true);
+    }
+
+    const getUserName = (id: string) => {
+      const user = userList.find((user: any) => user.id == id);
+      return user ? user.name : "No user";
+    }
+
+    //TODO: Currently supports only one casting
+    const addCasting = (event: any) => {
+      event.preventDefault();
+      postCasting().then((casting: any) => {
+        setCastings([...castings, casting]);
+        const newCharacter = { 
+          ...character, 
+          castingIdString: casting.id
+        };
+        putData(newCharacter.id, JSON.stringify(newCharacter)).then((data) => {
+          setCharacter(data);
+        });
+      });
+    }
 
     return (
       <main className="flex min-h-screen flex-col items-stretch justify-between p-3"> {/*} p-24"> */} 
         <div className="">        
-         <Item name={nameInput} image={imageInput} colour={colourInput} basicInfo={basicInfo}/> 
-         <BasicInfoEdit name={nameInput} image={imageInput} colour={colourInput} basicInfo={basicInfo} handleChangeInfo={handleChangeInfo}/> 
-         
+         <Item name={nameInput} image={imageInput} colour={colourInput} basicInfo={basicInfo} id={id}/> 
+         <BasicInfoEdit name={nameInput} image={imageInput} colour={colourInput} basicInfo={basicInfo} handleChangeInfo={handleChangeInfo}/>
+         {castings?.map((casting: any) => (
+          <CastingEdit castingId={ casting.id } />
+        ))}
+        <button onClick={(event) => addCasting(event) }>Add Casting</button>
+      
           <div className="bg-white w-full hover:bg-sky-100 rounded-lg shadow-lg flex-col items-stretch">
 
 
@@ -209,6 +390,26 @@ export default function Page({ params }: { params: { par: string } }) {
               <div className="p-3">
                 Colour
                 <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={colourInput} onChange={ handleColourChange }></input>
+              </div>
+              <div className="p-3">
+                User: { getUserName(userInput) }
+                <input className="h-full w-full rounded-[7px] px-3 py-2.5 border border-gray-300" value={userInput} onChange={ handleUserChange }></input>
+
+
+                <button onClick={(event) => handleOpenChooseUser(event) } className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                  Choose
+                </button>
+
+
+                
+            <dialog open={openChooseUser}>
+              {userList?.map((user: any) => (
+                <button onClick={(event) => handleChooseUser(event, user)} key={user.id}>{user.name}</button>
+              ))}
+              <form method="dialog">
+                <button onClick={(event) => handleOKUser(event)}>OK</button>
+              </form>
+            </dialog>
               </div>
 
               <div className="p-3 flex justify-end">

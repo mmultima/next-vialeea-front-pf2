@@ -25,7 +25,7 @@ export default async function Page() {
     }
 
     const listItems = data.map((character : any) =>
-      <Item name={character.name} image={character.image} colour={character.colour} basicInfo={basicInfo}/>
+      <Item name={character.name} image={character.image} colour={character.colour} basicInfo={basicInfo} id={character.id}/>
     );
 
 
